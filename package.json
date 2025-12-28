@@ -1,12 +1,11 @@
 {
-  "name": "poi-plugin-item-improvement",
-  "version": "7.1.3",
-  "description": "Show possible improvements of the day based on data from [WhoCallsTheFleet](https://fleet.moe)",
+  "name": "poi-plugin-item-improvement2",
+  "version": "0.0.1",
+  "description": "use new data source",
   "main": "index.es",
   "scripts": {
     "prepack": "poi-util-transpile",
     "postpublish": "git clean -f && git checkout .",
-    "data": "node ./assets/data_kcwiki.es",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -14,10 +13,11 @@
     "url": "git+https://github.com/poooi/plugin-item-improvement.git"
   },
   "author": {
-    "name": "KochiyaOcean",
-    "link": "https://github.com/kochiyaocean"
+    "name": "sakura2333",
+    "link": "https://github.com/sakura2333"
   },
   "contributors": [
+    "KochiyaOcean",
     "Dazzy Ding",
     "Kagami Seki",
     "SoraYama"
