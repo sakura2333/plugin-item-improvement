@@ -14,7 +14,7 @@ import {
   improveItemIdsByDaySelector,
 } from './selectors'
 
-const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
+const { __ } = window.i18n['poi-plugin-item-improvement2']
 
 const getJSTDayofWeek = () => {
   const date = new Date()

@@ -1,50 +1,44 @@
-import _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
+import _ from 'lodash'
 import { createSelector } from 'reselect'
 import {
-  // wctfSelector,
+  wctfSelector,
   constSelector,
   configSelector,
   equipsSelector,
   createDeepCompareArraySelector,
 } from 'views/utils/selectors'
 
-/**
- * 1️⃣ 本地 Nedb 数据注入
- */
-function loadNedb(nedbPath) {
-    if (!fs.existsSync(nedbPath)) return {}
-    return _(fs.readFileSync(nedbPath, 'utf-8').split('\n'))
-        .filter(Boolean)
-        .map(line => {
-            try { return JSON.parse(line) } catch (e) { return null }
-        })
-        .filter(Boolean)
-        .keyBy('id')
-        .value()
-}
-
-// 假设 assets 路径
 const ASSETS_DIR = path.join(__dirname, '../assets')
 
-// 注入三个数据源
-const arsenalWeekdayData = loadNedb(path.join(ASSETS_DIR, 'arsenal_weekday.nedb'))
-const arsenalAllData = loadNedb(path.join(ASSETS_DIR, 'arsenal.nedb'))
-const itemsData = loadNedb(path.join(ASSETS_DIR, 'items.nedb'))
+const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal.nedb')
+const ITEMS_PATH = path.join(ASSETS_DIR, 'items.nedb')
+const WEEKDAY_PATH = path.join(ASSETS_DIR, 'arsenal_weekday.nedb')
 
-/**
- * 2️⃣ 本地 wctf 模拟 selector
- * 用于插件内部使用，不动 POI 原生 db
- */
-export const wctfLocalSelector = createSelector(
-    [],
-    () => ({
-        arsenal_weekday: arsenalWeekdayData,
-        arsenal_all: arsenalAllData,
-        items: itemsData
-    })
-)
+/** ---------- 本地 Nedb loader ---------- */
+function loadNedbAsMap(nedbPath, key = 'id') {
+    try {
+        if (!fs.existsSync(nedbPath)) {
+            console.warn('[nedb] file not found:', nedbPath)
+            return {}
+        }
+        const content = fs.readFileSync(nedbPath, 'utf-8')
+        return _(content.split('\n'))
+            .filter(Boolean)
+            .map(line => { try { return JSON.parse(line) } catch (e) { return null } })
+            .filter(Boolean)
+            .keyBy(key)
+            .value()
+    } catch (e) {
+        console.error('[nedb] load failed:', e)
+        return {}
+    }
+}
+
+const localArsenal = loadNedbAsMap(ARSENAL_PATH, 'id')
+const localItems = loadNedbAsMap(ITEMS_PATH, 'id')
+const localWeekday = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
 
 const ourShipsSelector = createSelector(
   [
@@ -141,14 +135,14 @@ export const equipLevelStatSelector = createSelector(
 // base data is dependent on wctf-db and const
 const baseImprovementDataSelector = createSelector(
   [
-      wctfLocalSelector,
+    wctfSelector,
     constSelector,
     adjustedRemodelChainsSelector,
     shipUniqueMapSelector,
-  ], (db, $const, chains, uniqMap) => _(_.get(db, 'arsenal_all'))
+  ], (db, $const, chains, uniqMap) => _(localArsenal)
     .keys()
     .map(itemId => {
-      const item = _.get(db, ['items', itemId], {})
+      const item = localItems[itemId] || {}
       const assistants = _(_.range(7).concat(-1))
         .map(day =>
           ([
@@ -209,8 +203,8 @@ export const improvementDataSelector = createSelector(
 
 export const improveItemIdsByDaySelector = createSelector(
   [
-      wctfLocalSelector,
-  ], db => _(_.get(db, 'arsenal_weekday'))
+    wctfSelector,
+  ], db => _(localWeekday)
     .mapValues(day =>
       _(day.improvements)
         .map(([id]) => id)
