@@ -5,7 +5,9 @@
   "main": "index.es",
   "scripts": {
     "prepack": "poi-util-transpile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postpack": "npm run clean:js",
+    "clean:js": "find ./views -name '*.js' -type f -delete && rm -f ./index.js"
   },
   "repository": {
     "type": "git",
