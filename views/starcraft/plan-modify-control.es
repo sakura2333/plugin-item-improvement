@@ -11,7 +11,7 @@ import {
 import NumericInput from 'react-numeric-input'
 import { starText, modifyPlans } from './utils'
 
-const { __ } = window.i18n['poi-plugin-item-improvement']
+const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
 
 // props:
 // - plans: star to plan count

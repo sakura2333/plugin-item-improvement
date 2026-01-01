@@ -1,16 +1,15 @@
 {
-  "name": "poi-plugin-item-improvement2",
-  "version": "0.0.2",
+  "name": "poi-plugin-item-improvement2-beta",
+  "version": "0.0.30004",
   "description": "use new data source",
   "main": "index.es",
   "scripts": {
     "prepack": "poi-util-transpile",
-    "postpublish": "git clean -f && git checkout .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/poooi/plugin-item-improvement.git"
+    "url": "git+https://github.com/sakura2333/plugin-item-improvement.git"
   },
   "author": {
     "name": "sakura2333",
@@ -24,9 +23,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/poooi/plugin-item-improvement/issues"
+    "url": "https://github.com/sakura2333/plugin-item-improvement/issues"
   },
-  "homepage": "https://github.com/poooi/plugin-item-improvement#readme",
+  "homepage": "https://github.com/sakura2333/plugin-item-improvement#readme",
   "dependencies": {
     "dom-to-image": "^2.6.0",
     "react-numeric-input": "^2.2.3"

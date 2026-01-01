@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap'
 import { starText, modifyPlans } from './utils'
 
-const { __ } = window.i18n['poi-plugin-item-improvement']
+const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
 
 class PlanView extends Component {
   static propTypes = {

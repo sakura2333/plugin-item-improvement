@@ -4,7 +4,7 @@ import FontAwesome from 'react-fontawesome'
 import { SlotitemIcon } from 'views/components/etc/icon'
 import { UseitemIcon } from './useitem-icon'
 
-const { __ } = window.i18n['poi-plugin-item-improvement']
+const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
 const { __: __r } = window.i18n.resources
 
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

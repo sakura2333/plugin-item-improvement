@@ -10,7 +10,7 @@ import { PlanModifyControl } from './plan-modify-control'
 import { modifyPlans } from './utils'
 import { itemLevelStatFactory } from '../selectors'
 
-const { __ } = window.i18n['poi-plugin-item-improvement']
+const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
 
 // props:
 // - mstId, name, iconId, plans, viewMode

@@ -171,7 +171,7 @@ const baseImprovementDataSelector = createSelector(
                                     .values()
                                     .flatten()
                                     .map(id =>
-                                        window.i18n['poi-plugin-item-improvement'].__(
+                                        window.i18n['poi-plugin-item-improvement2-beta'].__(
                                             window.i18n.resources.__(
                                                 _.get($const, ['$ships', id, 'api_name'], 'None')
                                             )
