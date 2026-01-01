@@ -1,6 +1,6 @@
 {
   "Equipment Improvement": "装備改修表",
-  "plugin_description": "簡易装備改修表、データは [WhoCallsTheFleet](https://fleet.moe) によって提供されています。",
+  "plugin_description": "装備改修情報を表示します。[日本語wiki](https://wikiwiki.jp/kancolle/%E6%94%B9%E4%BF%AE%E8%A1%A8#SmallCaliber) のデータに基づいています",
   "Weekday setting": "曜日設定",
   "Choose weekday": "曜日選択",
   "Sunday": "日曜日",
