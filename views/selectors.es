@@ -12,7 +12,7 @@ import {
 
 const ASSETS_DIR = path.join(__dirname, '../assets')
 
-const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal.nedb')
+const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal_all.nedb')
 const ITEMS_PATH = path.join(ASSETS_DIR, 'items.nedb')
 const WEEKDAY_PATH = path.join(ASSETS_DIR, 'arsenal_weekday.nedb')
 
@@ -159,7 +159,7 @@ const baseImprovementDataSelector = createSelector(
                   )
                   .values()
                   .flatten()
-                  .map(id => window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($const, ['$ships', id, 'api_name'], 'None'))))
+                  .map(id => window.i18n['poi-plugin-item-improvement2-beta'].__(window.i18n.resources.__(_.get($const, ['$ships', id, 'api_name'], 'None'))))
                   .value()
               )
               .join('/'),
