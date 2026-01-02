@@ -29,8 +29,7 @@ ItemIcon.propTypes = {
 }
 
 // React Elements
-const MatRow = ({ stage, day, assistants, upgrade, items, development, improvement }) => {
-  const rowCnt = upgrade.icon ? 3 : 2
+const MatRow = ({ stageText,rowCnt,isFirst,isLast, day, assistants, upgrade, items, development, improvement }) => {
 
   let hishoCol = ''
   if (day === -1) {
@@ -57,14 +56,10 @@ const MatRow = ({ stage, day, assistants, upgrade, items, development, improveme
 
   let stageRow = ''
   let star = ''
-  switch (stage) {
-    case 0:
-      stageRow = <span><FontAwesome name="star" /> 1 ~ <FontAwesome name="star" /> 6 </span>
-      break
-    case 1:
-      stageRow = <span><FontAwesome name="star" /> 6 ~ <FontAwesome name="star" /> MAX </span>
-      break
-    case 2:
+
+   if (!isLast){
+      stageRow = <span>{stageText} </span>
+   }else if(upgrade.name) {
       if (upgrade.level) {
         star = <span> <FontAwesome name="star" />{` ${upgrade.level}`}</span>
       }
@@ -73,15 +68,15 @@ const MatRow = ({ stage, day, assistants, upgrade, items, development, improveme
         {window.i18n.resources.__(upgrade.name)}
         {star}
       </div>)
-      break
-    default:
-      console.error('unreachable code: stage is out of range')
-  }
+   } else {
+       return ""
+   }
+
 
   return (
     <tr>
       {
-        stage === 0 &&
+        isFirst &&
           <td rowSpan={rowCnt}>{hishoCol}</td>
       }
       <td>
@@ -115,10 +110,11 @@ __('Available', item.available)}
 }
 
 MatRow.propTypes = {
+  stageText: PropTypes.string.isRequired,
+  rowCnt: PropTypes.number,
   day: PropTypes.number.isRequired,
   development: PropTypes.arrayOf(PropTypes.number).isRequired,
   improvement: PropTypes.arrayOf(PropTypes.number).isRequired,
-  stage: PropTypes.number.isRequired,
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   upgrade: PropTypes.shape({
     level: PropTypes.number.isRequired,

@@ -94,36 +94,36 @@ const DetailRow = connect(state =>
       level: 0,
       name: '',
     }
-    let stages = [1, 2]
+
     if (upgrade) {
       const [itemId, level] = upgrade
       upgradeInfo.id = itemId
       upgradeInfo.level = level
       upgradeInfo.icon = _.get($equips, [itemId, 'api_type', 3])
       upgradeInfo.name = _.get($equips, [itemId, 'api_name'])
-      stages = [1, 2, 3]
     }
-
-    stages.forEach(stage => {
-      const [dev, ensDev, imp, ensImp, extra, count] = resource[stage]
+    const rowCnt = resource.length - 1
+    resource.slice(1).forEach((res , index , arr)=> {
+      const [dev, ensDev, imp, ensImp,stageText, extra] = res
       let items = []
+      const isFirst = index === 0
+      const isLast = index === arr.length - 1
 
-      if (_.isArray(extra)) {
-        items = extra.map(([item, _count]) => parseItem($equips, $useitems, item, _count, available))
-      } else {
-        items = [parseItem($equips, $useitems, extra, count, available)]
-      }
+      items = extra.map(([item, _count]) => parseItem($equips, $useitems, item, _count, available))
 
       result.push(
         <MatRow
-          stage={stage - 1}
+          isFirst={isFirst}
+          isLast={isLast}
+          rowCnt={rowCnt}
+          stageText={stageText}
           development={[dev, ensDev]}
           improvement={[imp, ensImp]}
           items={items}
           upgrade={upgradeInfo}
           assistants={assistants}
           day={day}
-          key={`${stage}-${day}-${upgradeInfo.id}`}
+          key={`${"walefjwaoifjeioawfiaew"}-${day}-${upgradeInfo.id}`}
         />
       )
     })
