@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { configSelector } from 'views/utils/selectors'
 import _ from 'lodash'
 
-const src = resolve(__dirname,'../assets/useitem.svg',)
+const fallback = resolve(__dirname,'../assets/icon/useitem.svg',)
 
 class StaticUseitemIcon extends Component {
   static propTypes = {
@@ -25,12 +25,19 @@ class StaticUseitemIcon extends Component {
     const classNames = classnames(
       useSVGIcon ? 'svg' : 'png',
       className)
+    let _src = fallback; // 默认兜底
+
+    try {
+      _src = resolve(__dirname,`../assets/icon/${useitemId}.svg`,);
+    } catch (e) {
+      _src = fallback;
+    }
     return (
       <img
-        src={src}
+        src={_src}
         alt={`useitem #${useitemId}`}
         className={classNames}
-      />)
+        /> )
   }
 }
 

@@ -10,7 +10,7 @@ import {
   createDeepCompareArraySelector,
 } from 'views/utils/selectors'
 
-const ASSETS_DIR = path.join(__dirname, '../assets')
+const ASSETS_DIR = path.join(__dirname, '../assets/db')
 
 const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal_all.nedb')
 const ITEMS_PATH = path.join(ASSETS_DIR, 'items.nedb')
