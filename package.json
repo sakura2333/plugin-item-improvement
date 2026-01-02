@@ -1,11 +1,12 @@
 {
   "name": "poi-plugin-item-improvement2-beta",
-  "version": "0.0.400004",
+  "version": "0.0.400003",
   "description": "use new data source",
   "main": "index.es",
   "scripts": {
     "prepack": "poi-util-transpile",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "postpack": "npm run clean:js",
     "clean:js": "find ./views -name '*.js' -type f -delete && rm -f ./index.js"
   },
   "repository": {
