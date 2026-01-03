@@ -67,7 +67,7 @@ const prepareEquipTypeInfo = $equips => {
   Object.keys( $equips ).map( k => {
     const equip = $equips[k]
     // excluding abyssal equipments
-    if (equip.api_id > 500)
+    if (equip.api_sortno === 0)
       return
     const catId = getCatId( equip )
     const iconId = getIconId( equip )

@@ -28,7 +28,7 @@ class StaticUseitemIcon extends Component {
     let _src = fallback; // 默认兜底
 
     try {
-      _src = resolve(__dirname,`../assets/icon/${useitemId}.svg`,);
+      _src = resolve(__dirname,`../assets/icon/${useitemId}.png`,);
     } catch (e) {
       _src = fallback;
     }
