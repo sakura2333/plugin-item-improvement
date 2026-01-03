@@ -59,7 +59,7 @@ const getCatId = $equip => $equip.api_type[2]
 const getIconId = $equip => $equip.api_type[3]
 
 // prepare equipment type related information for further processing
-const prepareEquipTypeInfo = $equips => {
+const prepareEquipTypeInfo = ($equips , improvableIds) => {
   const catInfo = {}
   const iconInfo = {}
 
@@ -67,8 +67,9 @@ const prepareEquipTypeInfo = $equips => {
   Object.keys( $equips ).map( k => {
     const equip = $equips[k]
     // excluding abyssal equipments
-    if (equip.api_sortno === 0)
-      return
+    if (improvableIds && !improvableIds.has(Number(equip.api_id))) {
+      return;
+    }
     const catId = getCatId( equip )
     const iconId = getIconId( equip )
 

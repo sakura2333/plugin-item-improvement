@@ -11,7 +11,7 @@ import { EquipCategoryView } from './equip-category-view'
 import { ControlPanel } from './control-panel'
 import { Divider } from '../divider'
 import { keyPlans } from './utils'
-
+import {improvableIdSetSelector} from '../selectors'
 const { $ } = window
 
 window.store = store
@@ -135,7 +135,8 @@ class Main extends Component {
 
 const StarcraftArea = connect(
   state => {
-    const equipTypeInfo = prepareEquipTypeInfo( state.const.$equips )
+    const improvableIds = improvableIdSetSelector(state)
+    const equipTypeInfo = prepareEquipTypeInfo( state.const.$equips,improvableIds  )
     const equipTypesRaw = state.const.$equipTypes
 
     const { $equips } = state.const

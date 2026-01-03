@@ -36,10 +36,14 @@ function loadNedbAsMap(nedbPath, key = 'id') {
     }
 }
 
-const localArsenal = loadNedbAsMap(ARSENAL_PATH, 'id')
-const localItems = loadNedbAsMap(ITEMS_PATH, 'id')
-const localWeekday = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
+const LOCAL_ARSENAL = loadNedbAsMap(ARSENAL_PATH, 'id')
+const LOCAL_ITEMS = loadNedbAsMap(ITEMS_PATH, 'id')
+const LOCAL_ARSENAL_WEEKDAY = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
 
+export const improvableIdSetSelector = createSelector(
+    [() => LOCAL_ITEMS],
+    (items) => new Set(Object.keys(items).map(Number))
+)
 const ourShipsSelector = createSelector(
   [
     constSelector,
@@ -139,10 +143,10 @@ const baseImprovementDataSelector = createSelector(
     constSelector,
     adjustedRemodelChainsSelector,
     shipUniqueMapSelector,
-  ], (db, $const, chains, uniqMap) => _(localArsenal)
+  ], (db, $const, chains, uniqMap) => _(LOCAL_ARSENAL)
     .keys()
     .map(itemId => {
-      const item = localItems[itemId] || {}
+      const item = LOCAL_ITEMS[itemId] || {}
       const assistants = _(_.range(7).concat(-1))
         .map(day =>
           ([
@@ -204,7 +208,7 @@ export const improvementDataSelector = createSelector(
 export const improveItemIdsByDaySelector = createSelector(
   [
     wctfSelector,
-  ], db => _(localWeekday)
+  ], db => _(LOCAL_ARSENAL_WEEKDAY)
     .mapValues(day =>
       _(day.improvements)
         .map(([id]) => id)
