@@ -55,6 +55,8 @@ export const ItemInfoArea = connect(state => ({
       fp.sortBy([
         row => -row.priority,
         row => row.api_type[2],
+        row => row.api_type[3],
+        row => row.api_name,
       ]),
     )(data)
   }
