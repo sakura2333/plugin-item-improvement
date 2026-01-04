@@ -13,7 +13,7 @@ import {
   equipAvailableSelector,
 } from './selectors'
 
-const { __ } = window.i18n['poi-plugin-item-improvement2']
+const { __ } = window.i18n['poi-plugin-item-improvement2-beta']
 
 const parseItem = ($equips, $useitems, item, count, available) => {
   if (_.isString(item)) {
@@ -72,12 +72,12 @@ const DetailRow = connect(state =>
           .values()
           .flatten()
           .map(id => ({
-            name: window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($ships, [id, 'api_name'], 'None'))),
+            name: window.i18n['poi-plugin-item-improvement2-beta'].__(window.i18n.resources.__(_.get($ships, [id, 'api_name'], 'None'))),
             day: days,
           }))
           .value()
         : ({
-          name: window.i18n['poi-plugin-item-improvement2'].__('None'),
+          name: window.i18n['poi-plugin-item-improvement2-beta'].__('None'),
           day: days,
         })
       )
