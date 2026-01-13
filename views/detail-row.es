@@ -16,8 +16,10 @@ import {
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 
 const parseItem = ($equips, $useitems, item, count, available) => {
+  console.log('availableitem',available[item])
   if (_.isString(item)) {
     const icon = parseInt(item.replace(/\D/g, ''), 10)
+    console.log('itemstring', item)
     return {
       icon,
       name: _.get($useitems, [icon, 'api_name']),
