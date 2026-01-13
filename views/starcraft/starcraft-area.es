@@ -11,7 +11,8 @@ import {prepareEquipTypeInfo} from './equiptype'
 import {EquipCategoryView} from './equip-category-view'
 import {ActionTypes, ControlPanel} from './control-panel'
 import {Divider} from '../divider'
-import {improvementDataSelector,starCraftPlanSelector} from '../selectors'
+import {improvementDataSelector} from '../selectors'
+import {getStarcraftPlans} from "./utils";
 
 const { $ } = window
 
@@ -148,7 +149,7 @@ const StarcraftArea = connect(
     // plans[<equipment master id>] = undefined or object
     // plans[...][0 .. 10] = number of planned count
     // connected plans:
-    const plans = starCraftPlanSelector()
+    const plans = getStarcraftPlans()
 
     return {
       equipTypes: mergedEquipTypes,
