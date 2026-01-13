@@ -125,7 +125,7 @@ const DetailRow = connect(state =>
           upgrade={upgradeInfo}
           assistants={assistants}
           day={day}
-          key={`${"walefjwaoifjeioawfiaew"}-${day}-${upgradeInfo.id}`}
+          key={`${stageText}-${day}-${upgradeInfo.id}`}
         />
       )
     })
