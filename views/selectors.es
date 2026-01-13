@@ -7,7 +7,7 @@ import {
   equipsSelector,
   createDeepCompareArraySelector,
 } from 'views/utils/selectors'
-import {getStarcraftPlans, initFirstPlan, keyPlans, modifyPlans} from "./starcraft/utils";
+import {getStarcraftPlans, infinityNum, modifyPlans} from "./starcraft/utils";
 
 
 const ASSETS_DIR = path.join(__dirname, '../assets/db')
@@ -35,9 +35,25 @@ function loadNedbAsMap(nedbPath, key = 'id') {
     }
 }
 
+export const migrateAllPlans = () => {
+    const plans = getStarcraftPlans();
+    let changed = false;
+    const newPlans = Object.keys(plans).reduce((acc, id) => {
+        if (!plans[id] || Object.keys(plans[id]).length === 0) {
+            acc[id] = { 0: infinityNum };
+            changed = true;
+        } else {
+            acc[id] = { ...plans[id] };
+        }
+        return acc;
+    }, {});
+    if (changed) modifyPlans(() => newPlans);
+};
+
 const LOCAL_ARSENAL = loadNedbAsMap(ARSENAL_PATH, 'id')
 const LOCAL_ITEMS = loadNedbAsMap(ITEMS_PATH, 'id')
 const LOCAL_ARSENAL_WEEKDAY = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
+migrateAllPlans()
 
 const ourShipsSelector = createSelector(
   [
@@ -110,11 +126,6 @@ export const adjustedRemodelChainsSelector = createSelector(
 
 export const starCraftPlanSelector = createSelector(
     getStarcraftPlans,
-    rawPlans => {
-        const cleanedPlans = { ...rawPlans }
-        Object.keys(cleanedPlans).forEach(id => initFirstPlan(cleanedPlans, id))
-        return cleanedPlans
-    }
 )
 
 
