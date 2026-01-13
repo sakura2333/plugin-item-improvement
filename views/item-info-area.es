@@ -26,7 +26,7 @@ const getJSTDayofWeek = () => {
 }
 
 export const ItemInfoArea = connect(state => ({
-  plans: starCraftPlanSelector(state),
+  plans: starCraftPlanSelector(state.plans),
   data: improvementDataSelector(state),
   idByDay: improveItemIdsByDaySelector(state),
   $equips: _.get(state, 'const.$ships', {}),

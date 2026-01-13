@@ -3,15 +3,14 @@ import path from 'path'
 import _ from 'lodash'
 import { createSelector } from 'reselect'
 import {
-  wctfSelector,
   constSelector,
-  configSelector,
   equipsSelector,
   createDeepCompareArraySelector,
 } from 'views/utils/selectors'
+import {getStarcraftPlans, initFirstPlan, keyPlans, modifyPlans} from "./starcraft/utils";
+
 
 const ASSETS_DIR = path.join(__dirname, '../assets/db')
-
 const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal_all.nedb')
 const ITEMS_PATH = path.join(ASSETS_DIR, 'items.nedb')
 const WEEKDAY_PATH = path.join(ASSETS_DIR, 'arsenal_weekday.nedb')
@@ -40,10 +39,6 @@ const LOCAL_ARSENAL = loadNedbAsMap(ARSENAL_PATH, 'id')
 const LOCAL_ITEMS = loadNedbAsMap(ITEMS_PATH, 'id')
 const LOCAL_ARSENAL_WEEKDAY = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
 
-export const improvableIdSetSelector = createSelector(
-    [() => LOCAL_ITEMS],
-    (items) => new Set(Object.keys(items).map(Number))
-)
 const ourShipsSelector = createSelector(
   [
     constSelector,
@@ -114,10 +109,15 @@ export const adjustedRemodelChainsSelector = createSelector(
 )
 
 export const starCraftPlanSelector = createSelector(
-  [
-    configSelector,
-  ], config => _.get(config, 'plugin.poi-plugin-starcraft.plans', {})
+    getStarcraftPlans,
+    rawPlans => {
+        const cleanedPlans = { ...rawPlans }
+        Object.keys(cleanedPlans).forEach(id => initFirstPlan(cleanedPlans, id))
+        return cleanedPlans
+    }
 )
+
+
 export const equipAvailableSelector = createSelector(
   [
     equipsSelector,
@@ -138,49 +138,49 @@ export const equipLevelStatSelector = createSelector(
 
 // base data is dependent on wctf-db and const
 const baseImprovementDataSelector = createSelector(
-  [
-    wctfSelector,
-    constSelector,
-    adjustedRemodelChainsSelector,
-    shipUniqueMapSelector,
-  ], (db, $const, chains, uniqMap) => _(LOCAL_ARSENAL)
-    .keys()
-    .map(itemId => {
-      const item = LOCAL_ITEMS[itemId] || {}
-      const assistants = _(_.range(7).concat(-1))
-        .map(day =>
-          ([
-            day,
-            _(item.improvement)
-              .flatMap(entry =>
-                _(entry.req)
-                  .flatMap(([days, ships]) => (day === -1 || days[day]) ? ships : [])
-                  .groupBy(id => uniqMap[id])
-                  .mapValues(ids => _(ids)
-                    .sortBy(id => (chains[id] || []).indexOf(id))
-                    .take(1)
-                    .value()
-                  )
-                  .values()
-                  .flatten()
-                  .map(id => window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($const, ['$ships', id, 'api_name'], 'None'))))
-                  .value()
-              )
-              .join('/'),
-          ])
-        )
-        .fromPairs()
-        .value()
+    [
+        constSelector,
+        adjustedRemodelChainsSelector,
+        shipUniqueMapSelector,
+    ],
+    ($const, chains, uniqMap) => _(LOCAL_ARSENAL)
+        .keys()
+        .map(itemId => {
+            const item = LOCAL_ITEMS[itemId] || {}
+            const assistants = _(_.range(7).concat(-1))
+                .map(day =>
+                    ([day,
+                        _(item.improvement)
+                            .flatMap(entry =>
+                                _(entry.req)
+                                    .flatMap(([days, ships]) => (day === -1 || days[day]) ? ships : [])
+                                    .groupBy(id => uniqMap[id])
+                                    .mapValues(ids => _(ids)
+                                        .sortBy(id => (chains[id] || []).indexOf(id))
+                                        .take(1)
+                                        .value()
+                                    )
+                                    .values()
+                                    .flatten()
+                                    .map(id => window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($const, ['$ships', id, 'api_name'], 'None'))))
+                                    .value()
+                            )
+                            .join('/'),
+                    ])
+                )
+                .fromPairs()
+                .value()
 
-      return {
-        ..._.get($const, ['$equips', item.id], {}),
-        ...item,
-        priority: 0,
-        assistants,
-      }
-    })
-    .value()
+            return {
+                ..._.get($const, ['$equips', item.id], {}),
+                ...item,
+                priority: 0,
+                assistants,
+            }
+        })
+        .value()
 )
+
 
 export const improvementDataSelector = createSelector(
   [
@@ -206,15 +206,13 @@ export const improvementDataSelector = createSelector(
 )
 
 export const improveItemIdsByDaySelector = createSelector(
-  [
-    wctfSelector,
-  ], db => _(LOCAL_ARSENAL_WEEKDAY)
-    .mapValues(day =>
-      _(day.improvements)
-        .map(([id]) => id)
+    () => _(LOCAL_ARSENAL_WEEKDAY)
+        .mapValues(day =>
+            _(day.improvements)
+                .map(([id]) => id)
+                .value()
+        )
         .value()
-    )
-    .value()
 )
 
 const arrayResultWrapper = selector =>

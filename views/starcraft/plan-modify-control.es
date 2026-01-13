@@ -7,7 +7,7 @@ import {
   FormControl,
   Checkbox,
 } from 'react-bootstrap'
-
+import {infinityNum} from './utils'
 import NumericInput from 'react-numeric-input'
 import { starText, modifyPlans } from './utils'
 
@@ -67,7 +67,7 @@ class PlanModifyControl extends Component {
         const newPlans = { ...plans }
         // it's safe to assume that plans[mstId] must exist at this point
         newPlans[mstId] = { ...plans[mstId] }
-        newPlans[mstId][star] = isInfinity ? 10000 : planCount
+        newPlans[mstId][star] = isInfinity ? infinityNum : planCount
         return newPlans
       })
       return

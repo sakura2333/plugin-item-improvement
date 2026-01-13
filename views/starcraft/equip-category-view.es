@@ -12,8 +12,6 @@ import { EquipListView } from './equip-list-view'
 import { isEquipMasterEqual } from './utils'
 
 // props:
-// - $equips
-// - catInfo
 // - collapsed
 // - equipLevels
 // - equipType
@@ -22,84 +20,53 @@ import { isEquipMasterEqual } from './utils'
 // - viewMode
 class EquipCategoryView extends Component {
   static propTypes = {
-    $equips: PropTypes.object.isRequired,
     collapsed: PropTypes.bool.isRequired,
     viewMode: PropTypes.bool.isRequired,
-    catInfo: PropTypes.shape({
-      group: PropTypes.arrayOf(PropTypes.number).isRequired,
-      icons: PropTypes.arrayOf(PropTypes.number).isRequired,
-    }).isRequired,
-    plans: PropTypes.object.isRequired,
+    onToggle: PropTypes.func.isRequired,
     equipType: PropTypes.shape({
       api_id: PropTypes.number.isRequired,
       api_name: PropTypes.string.isRequired,
+      equips: PropTypes.arrayOf(PropTypes.object).isRequired,
     }).isRequired,
-    onToggle: PropTypes.func.isRequired,
+    plans: PropTypes.object.isRequired,
   }
 
-  shouldComponentUpdate(nextProps) {
-    // skipping "catInfo" as it's generated from $equips
-    return this.props.collapsed !== nextProps.collapsed ||
-      this.props.viewMode !== nextProps.viewMode ||
-      ! _.isEqual(this.props.equipType, nextProps.equipType) ||
-      ! _.isEqual(this.props.plans, nextProps.plans) ||
-      ! isEquipMasterEqual( this.props.$equips, nextProps.$equips )
-  }
   render() {
-    const et = this.props.equipType
-    const ci = this.props.catInfo
-    const {$equips, collapsed} = this.props
-    const hasPlan = ci.group.some( mstId => this.props.plans[mstId])
-
-    // for view mode, no need of showing anything .. if there's nothing to show...
-    if (this.props.viewMode && (collapsed || ! hasPlan)) {
-      return null
-    }
+    const { equipType: et, collapsed, viewMode, plans } = this.props
 
     return (
-      <div>
-        <Button
-            onClick={this.props.onToggle}
-            style={{
-              width: '100%',
-              margin: '2px',
-              display: 'flex', alignItems: 'center',
-            }} >
-          { !this.props.viewMode &&
-            (<FontAwesome
-                 className="eqcat-collapse-toggle"
-                 style={{marginRight: '10px'}}
-                 name={collapsed ? 'chevron-right' : 'chevron-down'}
-             />)
-          }
-          <div
-              style={{flex: '1', textAlign: 'left'}}
-              key="name">{et.api_name}</div>
-          <div>
-            {
-              ci.icons.map( iconId =>
-                <SlotitemIcon
-                    key={iconId}
-                    slotitemId={iconId} className="equip-icon" />)
-            }
-          </div>
-        </Button>
-        <Collapse timeout={100} in={!collapsed}>
-          <div
-              style={{paddingLeft: '20px'}}
+        <div>
+          <Button
+              onClick={this.props.onToggle}
+              style={{ width: '100%', margin: '2px', display: 'flex', alignItems: 'center' }}
           >
-            <EquipListView
-                viewMode={this.props.viewMode}
-                plans={this.props.plans}
-                equipMstIds={this.props.catInfo.group}
-                $equips={$equips}
-            />
-          </div>
-        </Collapse>
-      </div>)
+            {!viewMode && (
+                <FontAwesome
+                    className="eqcat-collapse-toggle"
+                    style={{ marginRight: '10px' }}
+                    name={collapsed ? 'chevron-right' : 'chevron-down'}
+                />
+            )}
+            <div style={{ flex: 1, textAlign: 'left' }}>{et.api_name}</div>
+            <div>
+              {Array.from(new Set(et.equips.map(e => e.iconId))).map(iconId => (
+                  <SlotitemIcon key={iconId} slotitemId={iconId} className="equip-icon" />
+              ))}
+            </div>
+          </Button>
+
+          <Collapse timeout={100} in={!collapsed}>
+            <div style={{ paddingLeft: '20px' }}>
+              <EquipListView
+                  viewMode={viewMode}
+                  plans={plans}
+                  equips={et.equips}
+              />
+            </div>
+          </Collapse>
+        </div>
+    )
   }
 }
 
-export {
-  EquipCategoryView,
-}
+export { EquipCategoryView }

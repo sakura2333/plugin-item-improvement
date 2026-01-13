@@ -1,87 +1,62 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import _ from 'lodash'
-import {
-  ListGroup,
-  ListGroupItem,
-} from 'react-bootstrap'
+import { ListGroup, ListGroupItem } from 'react-bootstrap'
 
 import { EquipView } from './equip-view'
 import { AddNewEquipView } from './add-new-equip-view'
-import { getIconId } from './equiptype'
-import { isEquipMasterEqual } from './utils'
 
-// props:
-// - $equips
-// - equipLevels
-// - equipMstIds
-// - plans
-// - viewMode
 class EquipListView extends Component {
   static propTypes = {
     viewMode: PropTypes.bool.isRequired,
-    $equips: PropTypes.object.isRequired,
-    plans: PropTypes.object.isRequired,
-    equipMstIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    equips: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      iconId: PropTypes.number.isRequired,
+    })).isRequired,
+    plans: PropTypes.object.isRequired, // 保留，用于判断哪些有计划
   }
 
   shouldComponentUpdate(nextProps) {
     return this.props.viewMode !== nextProps.viewMode ||
-      ! _.isEqual(this.props.equipMstIds, nextProps.equipMstIds ) ||
-      ! _.isEqual(this.props.plans, nextProps.plans) ||
-      ! isEquipMasterEqual( this.props.$equips, nextProps.$equips )
+        !_.isEqual(this.props.equips, nextProps.equips) ||
+        !_.isEqual(this.props.plans, nextProps.plans)
   }
 
   render() {
-    // equipment list for those that has plans.
+    const { equips, plans, viewMode } = this.props
+
     const equipList = []
-    // equipment list for those that doesn't have plans
     const equipListNoPlan = []
-    const $equips = this.props.$equips
 
-    this.props.equipMstIds.map( mstId => {
-      const plans = this.props.plans[mstId]
-      const $equip = $equips[mstId]
-      const name = $equip.api_name
-      const iconId = getIconId( $equip )
-
-      if (plans) {
-        equipList.push( {mstId, name, iconId, plans } )
+    equips.forEach(e => {
+      if (plans[e.id]) {
+        equipList.push({ ...e, plans: plans[e.id] })
       } else {
-        equipListNoPlan.push( {mstId, name, iconId} )
+        equipListNoPlan.push(e)
       }
     })
 
     return (
-      <ListGroup style={{marginBottom: '0'}}>
-        {
-          equipList.map( args => (
-            <ListGroupItem
-                style={{padding: '0'}}
-                key={args.mstId}>
-              <div>
+        <ListGroup style={{ marginBottom: 0 }}>
+          {equipList.map(e => (
+              <ListGroupItem style={{ padding: 0 }} key={e.id}>
                 <EquipView
-                    viewMode={this.props.viewMode}
-                    { ... args } />
-              </div>
-            </ListGroupItem>)
-          )
-        }
-        {
-          !this.props.viewMode && equipListNoPlan.length > 0 && (
-            <ListGroupItem
-                style={{padding: '0'}}
-                key="noplan">
-              <div>
+                    viewMode={viewMode}
+                    mstId={e.id}        // 保持原始mstId
+                    name={e.name}
+                    iconId={e.iconId}
+                    plans={plans[e.id]} // 单独传入对应的计划
+                />
+              </ListGroupItem>
+          ))}
+          {!viewMode && equipListNoPlan.length > 0 && (
+              <ListGroupItem style={{ padding: 0 }} key="noplan">
                 <AddNewEquipView equips={equipListNoPlan} />
-              </div>
-            </ListGroupItem>)
-        }
-      </ListGroup>
+              </ListGroupItem>
+          )}
+        </ListGroup>
     )
   }
 }
 
-export {
-  EquipListView,
-}
+export { EquipListView }

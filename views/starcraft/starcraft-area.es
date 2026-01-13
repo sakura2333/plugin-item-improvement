@@ -1,17 +1,18 @@
 import domtoimage from 'dom-to-image'
 import _ from 'lodash'
-import { remote } from 'electron'
-import React, { Component } from 'react'
+import {remote} from 'electron'
+import React, {Component} from 'react'
 import PropTypes from 'prop-types'
-import { connect } from 'react-redux'
-import { store } from 'views/create-store'
+import {connect} from 'react-redux'
+import {store} from 'views/create-store'
+import fp from 'lodash/fp'
 
-import { prepareEquipTypeInfo } from './equiptype'
-import { EquipCategoryView } from './equip-category-view'
-import { ControlPanel } from './control-panel'
-import { Divider } from '../divider'
-import { keyPlans } from './utils'
-import {improvableIdSetSelector} from '../selectors'
+import {prepareEquipTypeInfo} from './equiptype'
+import {EquipCategoryView} from './equip-category-view'
+import {ActionTypes, ControlPanel} from './control-panel'
+import {Divider} from '../divider'
+import {improvementDataSelector,starCraftPlanSelector} from '../selectors'
+
 const { $ } = window
 
 window.store = store
@@ -19,25 +20,23 @@ window.store = store
 $('#fontawesome-css')
   .setAttribute('href', require.resolve('font-awesome/css/font-awesome.css'))
 
-class Main extends Component {
+class Starcraft extends Component {
   static propTypes = {
     $equips: PropTypes.object.isRequired,
-    equipTypes: PropTypes.object.isRequired,
-    plans: PropTypes.object.isRequired,
-    equipTypeInfo: PropTypes.shape( {
-      catInfo: PropTypes.object.isRequired,
-      iconInfo: PropTypes.object.isRequired,
+    equipTypes: PropTypes.shape({
+      api_id: PropTypes.number.isRequired,
+      api_name: PropTypes.string.isRequired,
+      equips: PropTypes.arrayOf(PropTypes.object).isRequired,
     }).isRequired,
   }
 
   static prepareAutoCollapse(props) {
     const equipTypeCollapsed = {}
-    const {equipTypes, equipTypeInfo, plans} = props
-    Object.keys( equipTypes ).map( k => {
+    const { equipTypes, plans } = props
+
+    Object.keys(equipTypes).forEach(k => {
       const et = equipTypes[k]
-      const ci = equipTypeInfo.catInfo[et.api_id]
-      equipTypeCollapsed[k] =
-        ! ci.group.some( mstId => plans[mstId])
+      equipTypeCollapsed[k] = !et.equips.some(equip => plans[equip.id])
     })
 
     return { equipTypeCollapsed }
@@ -45,7 +44,7 @@ class Main extends Component {
 
   constructor(props) {
     super()
-    this.state = { ...Main.prepareAutoCollapse(props), viewMode: false }
+    this.state = { ...Starcraft.prepareAutoCollapse(props), viewMode: false }
     this.viewRef = null
   }
 
@@ -60,19 +59,21 @@ class Main extends Component {
 
   handleControlAction = action => {
     const { equipTypes } = this.props
-    if (action === 'Auto') {
-      this.setState( Main.prepareAutoCollapse(this.props) )
+    if (action === ActionTypes.DEFAULT) {
+      this.setState( Starcraft.prepareAutoCollapse(this.props) )
       return
     }
 
-    if (action === 'ExpandAll' || action === 'CollapseAll') {
-      const collapsed = action === 'CollapseAll'
+    if (action === ActionTypes.EXPAND_ALL || action === ActionTypes.COLLAPSE_ALL) {
+      // 用枚举判断折叠状态
+      const collapsed = action === ActionTypes.COLLAPSE_ALL
+
       const equipTypeCollapsed = {}
-      Object.keys( equipTypes ).map( k => {
+      Object.keys(equipTypes).forEach(k => {
         equipTypeCollapsed[k] = collapsed
       })
 
-      this.setState( { equipTypeCollapsed } )
+      this.setState({ equipTypeCollapsed })
       return
     }
 
@@ -96,7 +97,7 @@ class Main extends Component {
   }
 
   render() {
-    const { equipTypes, equipTypeInfo, plans, $equips } = this.props
+    const { equipTypes, plans } = this.props
     const { equipTypeCollapsed, viewMode } = this.state
     return (
       <div
@@ -113,7 +114,6 @@ class Main extends Component {
           {
             Object.keys(equipTypes).map( k => {
               const et = equipTypes[k]
-              const ci = equipTypeInfo.catInfo[et.api_id]
               return (
                 <EquipCategoryView
                     viewMode={viewMode}
@@ -121,9 +121,7 @@ class Main extends Component {
                     collapsed={equipTypeCollapsed[k]}
                     onToggle={this.handleToggle(k)}
                     equipType={et}
-                    catInfo={ci}
                     plans={plans}
-                    $equips={$equips}
                 />)
             })
           }
@@ -135,33 +133,28 @@ class Main extends Component {
 
 const StarcraftArea = connect(
   state => {
-    const improvableIds = improvableIdSetSelector(state)
-    const equipTypeInfo = prepareEquipTypeInfo( state.const.$equips,improvableIds  )
-    const equipTypesRaw = state.const.$equipTypes
+    //sort item by normalType -> detailType -> nameString
+    const rawData = improvementDataSelector(state)
 
-    const { $equips } = state.const
+    const sortedEquip = fp.flow(
+        fp.sortBy([
+          row => row.api_type[2],
+          row => row.api_type[3],
+          row => row.api_name
+        ]))(rawData)
+
+    const mergedEquipTypes = prepareEquipTypeInfo(sortedEquip, state.const.$equipTypes)
 
     // plans[<equipment master id>] = undefined or object
     // plans[...][0 .. 10] = number of planned count
     // connected plans:
-    const plans = _.get(state,`config.${keyPlans}`, {})
-
-    // filter equipTypes to remove empty categories
-    // before any UI rendering happens
-    const equipTypes = {}
-    Object.keys(equipTypesRaw).map( k => {
-      const et = equipTypesRaw[k]
-      const ci = equipTypeInfo.catInfo[et.api_id]
-      if (ci && ci.group.length > 0)
-        equipTypes[k] = et
-    })
+    const plans = starCraftPlanSelector()
 
     return {
-      equipTypeInfo,
-      equipTypes,
+      equipTypes: mergedEquipTypes,
       plans,
-      $equips,
+      $equips: sortedEquip
     }
-  })(Main)
+  })(Starcraft)
 
 export { StarcraftArea }

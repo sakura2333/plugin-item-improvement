@@ -55,59 +55,43 @@
 
  */
 
-const getCatId = $equip => $equip.api_type[2]
+const getTypeId = $equip => $equip.api_type[2]
 const getIconId = $equip => $equip.api_type[3]
 
 // prepare equipment type related information for further processing
-const prepareEquipTypeInfo = ($equips , improvableIds) => {
-  const catInfo = {}
-  const iconInfo = {}
+const prepareEquipTypeInfo = (equips, rawTypes) => {
+  const mergedTypes = {}
 
-  // first pass, sets everything but "catInfo[?].icons"
-  Object.keys( $equips ).map( k => {
-    const equip = $equips[k]
-    // excluding abyssal equipments
-    if (improvableIds && !improvableIds.has(Number(equip.api_id))) {
-      return;
+  // 遍历装备，生成对应的 typeEntry
+  Object.values(equips).forEach(equip => {
+    const typeId = getTypeId(equip)
+
+    // 如果 typeEntry 还没生成，从 rawTypes 中找值
+    if (!mergedTypes[typeId]) {
+      // 在 rawTypes 中找对应 type
+      const rawType = Object.values(rawTypes).find(t => t.api_id === typeId)
+      if (!rawType) return
+
+      mergedTypes[typeId] = {
+        ...rawType,
+        equips: []
+      }
     }
-    const catId = getCatId( equip )
-    const iconId = getIconId( equip )
 
-    let cat = catInfo[catId]
-    if (typeof cat === 'undefined')
-      cat = {group: []}
-    let icon = iconInfo[iconId]
-    if (typeof icon === 'undefined')
-      icon = []
-
-    cat.group.push( equip.api_id )
-    icon.push( equip.api_id )
-
-    catInfo[catId] = cat
-    iconInfo[iconId] = icon
-  })
-
-  // second pass, finishing "catInfo[?].icons"
-  Object.keys( catInfo ).map( k => {
-    const cat = catInfo[k]
-    const icons = []
-    cat.group.map( mstId => {
-      const equip = $equips[mstId]
-      const iconId = getIconId( equip )
-      if (icons.indexOf( iconId ) === -1)
-        icons.push( iconId )
+    // 推入装备信息
+    const iconId = getIconId(equip)
+    mergedTypes[typeId].equips.push({
+      id: equip.api_id,
+      name: equip.api_name,
+      iconId,
     })
-    cat.icons = icons.sort()
   })
 
-  return {
-    catInfo,
-    iconInfo,
-  }
+  return mergedTypes
 }
 
+
 export {
-  getCatId,
   getIconId,
   prepareEquipTypeInfo,
 }
