@@ -23,9 +23,9 @@ const parseItem = ($equips, $useitems, itemId, count,type, available) => {
   if (type === 1) {
     // console.log('itemstring', itemId)
     return {
-      itemId,
+      icon:itemId,
       name: _.get($useitems, [itemId, 'api_name']),
-      count,
+      count:count,
       id: itemId,
       type: 'useitem',
     }
