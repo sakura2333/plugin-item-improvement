@@ -50,13 +50,13 @@ export const ItemInfoArea = connect(state => ({
   getRows = day => {
     const { data, idByDay } = this.props
     return fp.flow(
-      fp.filter(row => day === -1 || (idByDay[day] || []).includes(row.id)),
-      fp.sortBy([
-        row => -row.priority,
-        row => row.api_type[2],
-        row => row.api_type[3],
-        row => row.api_name,
-      ]),
+        fp.filter(row => day === -1 || (idByDay[day] || []).includes(row.id)),
+        fp.sortBy([
+          row => -row.priority,
+          row => row.api_type[2],
+          row => row.api_type[3],
+          row => row.api_name,
+        ]),
     )(data)
   }
 
@@ -65,41 +65,41 @@ export const ItemInfoArea = connect(state => ({
     const { plans, $equips } = this.props
 
     return (
-      <div id="item-improvement">
-        <div className="flex-column">
-          <link rel="stylesheet" href={join(__dirname, '..', 'assets', 'main.css')} />
-          <Grid className="vertical-center" style={{ minHeight: 45 }}>
-            <Col xs={12} style={{ padding: 0 }}>
-              <Nav className="main-nav" bsStyle="pills" activeKey={this.state.day} onSelect={this.handleKeyChange}>
-                <NavItem eventKey={0}>{__('Sunday')}</NavItem>
-                <NavItem eventKey={1}>{__('Monday')}</NavItem>
-                <NavItem eventKey={2}>{__('Tuesday')}</NavItem>
-                <NavItem eventKey={3}>{__('Wednesday')}</NavItem>
-                <NavItem eventKey={4}>{__('Thursday')}</NavItem>
-                <NavItem eventKey={5}>{__('Friday')}</NavItem>
-                <NavItem eventKey={6}>{__('Saturday')}</NavItem>
-                <NavItem eventKey={-1}>{__('All')}</NavItem>
-                <NavItem eventKey={10}>{__('Starcraft')}</NavItem>
-              </Nav>
-            </Col>
-          </Grid>
-          <Grid className="list-container">
-            {
-              this.state.day < 7 ?
-              this.getRows(this.state.day).map((row, index) => (
-                <ItemWrapper
-                  index={index}
-                  row={row}
-                  key={row.id}
-                  day={day}
-                  plans={plans}
-                  $equips={$equips} />
-              )) :
-              <StarcraftArea />
-            }
-          </Grid>
+        <div id="item-improvement">
+          <div className="flex-column">
+            <link rel="stylesheet" href={join(__dirname, '..', 'assets', 'main.css')} />
+            <Grid className="vertical-center" style={{ minHeight: 45 }}>
+              <Col xs={12} style={{ padding: 0 }}>
+                <Nav className="main-nav" bsStyle="pills" activeKey={this.state.day} onSelect={this.handleKeyChange}>
+                  <NavItem eventKey={0}>{__('Sunday')}</NavItem>
+                  <NavItem eventKey={1}>{__('Monday')}</NavItem>
+                  <NavItem eventKey={2}>{__('Tuesday')}</NavItem>
+                  <NavItem eventKey={3}>{__('Wednesday')}</NavItem>
+                  <NavItem eventKey={4}>{__('Thursday')}</NavItem>
+                  <NavItem eventKey={5}>{__('Friday')}</NavItem>
+                  <NavItem eventKey={6}>{__('Saturday')}</NavItem>
+                  <NavItem eventKey={-1}>{__('All')}</NavItem>
+                  <NavItem eventKey={10}>{__('Starcraft')}</NavItem>
+                </Nav>
+              </Col>
+            </Grid>
+            <Grid className="list-container">
+              {
+                this.state.day < 7 ?
+                    this.getRows(this.state.day).map((row, index) => (
+                        <ItemWrapper
+                            index={index}
+                            row={row}
+                            key={row.id}
+                            day={day}
+                            plans={plans}
+                            $equips={$equips} />
+                    )) :
+                    <StarcraftArea />
+              }
+            </Grid>
+          </div>
         </div>
-      </div>
     )
   }
 })

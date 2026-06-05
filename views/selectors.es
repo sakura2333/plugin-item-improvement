@@ -157,31 +157,26 @@ const baseImprovementDataSelector = createSelector(
         adjustedRemodelChainsSelector,
         shipUniqueMapSelector,
     ],
-    ($const, chains, uniqMap) => _(LOCAL_ARSENAL)
+    ($const) => _(LOCAL_ARSENAL)
         .keys()
         .map(itemId => {
             const item = LOCAL_ITEMS[itemId] || {}
-            const assistants = _(_.range(7).concat(-1))
-                .map(day =>
-                    ([day,
-                        _(item.improvement)
-                            .flatMap(entry =>
-                                _(entry.req)
-                                    .flatMap(([days, ships]) => (day === -1 || days[day]) ? ships : [])
-                                    .groupBy(id => uniqMap[id])
-                                    .mapValues(ids => _(ids)
-                                        .sortBy(id => (chains[id] || []).indexOf(id))
-                                        .take(1)
-                                        .value()
-                                    )
-                                    .values()
-                                    .flatten()
-                                    .map(id => window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($const, ['$ships', id, 'api_name'], 'None'))))
-                                    .value()
-                            )
-                            .join('/'),
-                    ])
-                )
+
+            const assistants = _( _.range(7).concat(-1) )
+                .map(day => {
+                    const list = _(item.improvementList || [])
+                        .flatMap(improvement => {
+                            const shipWeek = improvement.shipWeekList || []
+
+                            return shipWeek
+                                .filter(s => day === -1 || s.week?.[day])
+                                .map(s => s.text)
+                        })
+                        .uniq()
+                        .value()
+
+                    return [day, list.join('/')]
+                })
                 .fromPairs()
                 .value()
 

@@ -14,39 +14,31 @@ import {
 } from './selectors'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
+const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const parseItem = ($equips, $useitems, item, count, available) => {
-  console.log('availableitem',available[item])
-  if (_.isString(item)) {
-    const icon = parseInt(item.replace(/\D/g, ''), 10)
-    console.log('itemstring', item)
+const parseItem = ($equips, $useitems, itemId, count,type, available) => {
+  // console.log('availableitem',available[itemId])
+  //type 0 武器
+  //type 1 useitem
+  if (type === 1) {
+    // console.log('itemstring', itemId)
     return {
-      icon,
-      name: _.get($useitems, [icon, 'api_name']),
+      itemId,
+      name: _.get($useitems, [itemId, 'api_name']),
       count,
-      id: icon,
+      id: itemId,
       type: 'useitem',
     }
   }
-
-  if (item) {
+  else {
     return {
-      icon: _.get($equips, [item, 'api_type', 3]),
-      name: _.get($equips, [item, 'api_name']),
+      icon: _.get($equips, [itemId, 'api_type', 3]),
+      name: _.get($equips, [itemId, 'api_name']),
       count,
-      id: item,
+      id: itemId,
       type: 'item',
-      available: available[item] ? available[item].length : 0,
+      available: available[itemId] ? available[itemId].length : 0,
     }
-  }
-
-  return {
-    icon: 0,
-    name: '',
-    count: 0,
-    id: 0,
-    type: 'item',
-    available: 0,
   }
 }
 
@@ -58,79 +50,82 @@ const DetailRow = connect(state =>
     uniqMap: shipUniqueMapSelector(state),
     available: equipAvailableSelector(state),
   })
-)(({ row, day, $const: { $ships, $equips, $useitems }, chains, uniqMap, available }) => {
+)(({ row: row, day, $const: { $equips, $useitems },  available }) => {
   const result = []
-  row.improvement.forEach(({ req, resource, upgrade }) => {
-    const assistants = _(req)
-      .flatMap(([days, ships]) => ships
-        ? _(ships)
-          .filter(() => day === -1 || days[day])
-          .groupBy(id => uniqMap[id])
-          .mapValues(ids => _(ids)
-            .sortBy(id => (chains[id] || []).indexOf(id))
-            .take(1)
-            .value()
-          )
-          .values()
-          .flatten()
-          .map(id => ({
-            name: window.i18n['poi-plugin-item-improvement2'].__(window.i18n.resources.__(_.get($ships, [id, 'api_name'], 'None'))),
-            day: days,
-          }))
-          .value()
-        : ({
-          name: window.i18n['poi-plugin-item-improvement2'].__('None'),
-          day: days,
-        })
-      )
-      .value()
+  row.improvementList.forEach((improvement,improvementIndex) => {
+    const { baseResource, stageList, shipWeekList } = improvement
 
-    // skip the entry if no secretary availbale for chosen day
+    const assistants = shipWeekList.map(shipWeek => {
+      const days = shipWeek.week
+          .map((v, i) => (v ? i : null))
+          .filter(v => v !== null);
+
+      const fullWeek = days.length === 7;
+
+      return {
+        name: shipWeek.text,
+        days,
+        fullWeek,
+        dayText: fullWeek
+            ? ''
+            : `(${days.map(i => __(WEEKDAY[i])).join(' / ')})`
+      };
+    });
+
+    // skip if no ships
     if (assistants.length === 0) {
       return
     }
 
-    const upgradeInfo = {
-      icon: 0,
-      id: 0,
-      level: 0,
-      name: '',
-    }
+    const rowCnt = stageList.length
 
-    if (upgrade) {
-      const [itemId, level] = upgrade
-      upgradeInfo.id = itemId
-      upgradeInfo.level = level
-      upgradeInfo.icon = _.get($equips, [itemId, 'api_type', 3])
-      upgradeInfo.name = _.get($equips, [itemId, 'api_name'])
-    }
-    const rowCnt = resource.length - 1
-    resource.slice(1).forEach((res , index , arr)=> {
-      const [dev, ensDev, imp, ensImp,stageText, extra] = res
-      let items = []
+    stageList.forEach((stage, index, arr) => {
       const isFirst = index === 0
       const isLast = index === arr.length - 1
 
-      items = extra.map(([item, _count]) => parseItem($equips, $useitems, item, _count, available))
+      const items = (stage.consumables || []).map(consumable =>
+          parseItem(
+              $equips,
+              $useitems,
+              consumable.id,
+              consumable.count,
+              consumable.type,
+              available
+          )
+      )
+      const upgradeInfo = {
+        icon: 0,
+        id: 0,
+        level: 0,
+        name: '',
+      }
+
+      if (stage.targetWeapon.id >0 ){
+        const itemId = stage.targetWeapon.id
+        upgradeInfo.id = stage.targetWeapon.id
+        upgradeInfo.level = stage.targetWeapon.level
+        upgradeInfo.icon = _.get($equips, [itemId, 'api_type', 3])
+        upgradeInfo.name = _.get($equips, [itemId, 'api_name'])
+      }
 
       result.push(
-        <MatRow
-          isFirst={isFirst}
-          isLast={isLast}
-          rowCnt={rowCnt}
-          stageText={stageText}
-          development={[dev, ensDev]}
-          improvement={[imp, ensImp]}
-          items={items}
-          upgrade={upgradeInfo}
-          assistants={assistants}
-          day={day}
-          key={`${stageText}-${day}-${upgradeInfo.id}`}
-        />
+          <MatRow
+              isFirst={isFirst}
+              isLast={isLast}
+              rowCnt={rowCnt}
+              stageText={stage.stageText}
+              development={[stage.industryResource[0], stage.industryResource[1]]}
+              improvement={[stage.industryResource[2], stage.industryResource[3]]}
+              items={items}
+              upgrade={upgradeInfo}
+              assistants={assistants}
+              day={day}
+              key={`${stage.stageText}-${improvementIndex}-${index}`}
+          />
       )
     })
   })
-  const [fuel, ammo, steel, bauxite] = row.improvement[0].resource[0]
+  const [fuel, ammo, steel, bauxite] = row.improvementList[0].baseResource
 
   return (
     <div>

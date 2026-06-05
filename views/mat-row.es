@@ -7,7 +7,6 @@ import { UseitemIcon } from './useitem-icon'
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 const { __: __r } = window.i18n.resources
 
-const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const ItemIcon = ({ item, ...props }) => item.type === 'useitem'
   ? <UseitemIcon
@@ -31,33 +30,24 @@ ItemIcon.propTypes = {
 // React Elements
 const MatRow = ({ stageText,rowCnt,isFirst,isLast, day, assistants, upgrade, items, development, improvement }) => {
 
-  let hishoCol = ''
-  if (day === -1) {
-    hishoCol = assistants.map(hisho => {
-      let days = []
-      hisho.day.forEach((v, i) => {
-        if (v) days.push(__(WEEKDAY[i]))
-      })
-      if (days.length === 7) {
-        days = ''
-      } else {
-        days = `(${days.join(' / ')})`
-      }
-      return (
+    let hishoCol = assistants.map(hisho => (
         <div className="hisho-col" key={hisho.name}>
-          {hisho.name}<br />
-          <span className="available-days">{days}</span>
+            {hisho.name}
+            {day === -1 && (
+                <>
+                    <br />
+                    <span className="available-days">
+          {hisho.dayText}
+        </span>
+                </>
+            )}
         </div>
-      )
-    })
-  } else {
-    hishoCol = assistants.map(hisho => <div key={hisho.name}>{hisho.name}</div>)
-  }
+    ));
 
   let stageRow = ''
   let star = ''
 
-   if (!isLast){
+   if (stageText) {
       stageRow = <span>{stageText} </span>
    }else if(upgrade.name) {
       if (upgrade.level) {
@@ -110,23 +100,25 @@ __('Available', item.available)}
 }
 
 MatRow.propTypes = {
-  stageText: PropTypes.string.isRequired,
-  rowCnt: PropTypes.number,
-  day: PropTypes.number.isRequired,
-  development: PropTypes.arrayOf(PropTypes.number).isRequired,
-  improvement: PropTypes.arrayOf(PropTypes.number).isRequired,
-  items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  upgrade: PropTypes.shape({
-    level: PropTypes.number.isRequired,
-    icon: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
-  }).isRequired,
-  assistants: PropTypes.arrayOf(
-    PropTypes.shape({
-      day: PropTypes.arrayOf(PropTypes.bool).isRequired,
-      name: PropTypes.string.isRequired,
-    })
-  ).isRequired,
+    stageText: PropTypes.string.isRequired,
+    rowCnt: PropTypes.number,
+    day: PropTypes.number.isRequired,
+    development: PropTypes.arrayOf(PropTypes.number).isRequired,
+    improvement: PropTypes.arrayOf(PropTypes.number).isRequired,
+    items: PropTypes.arrayOf(PropTypes.object).isRequired,
+    upgrade: PropTypes.shape({
+        level: PropTypes.number.isRequired,
+        icon: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+    }).isRequired,
+    assistants: PropTypes.arrayOf(
+        PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            days: PropTypes.arrayOf(PropTypes.number).isRequired,
+            fullWeek: PropTypes.bool,
+            dayText: PropTypes.string.isRequired,
+        })
+    ).isRequired,
 }
 
 export { MatRow }
