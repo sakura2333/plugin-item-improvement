@@ -54,7 +54,6 @@ const DetailRow = connect(state =>
   const result = []
   row.improvementList.forEach((improvement,improvementIndex) => {
     const { baseResource, stageList, shipWeekList } = improvement
-
     const assistants = shipWeekList.map(shipWeek => {
       const days = shipWeek.week
           .map((v, i) => (v ? i : null))
@@ -65,7 +64,6 @@ const DetailRow = connect(state =>
       return {
         name: shipWeek.text,
         days,
-        fullWeek,
         dayText: fullWeek
             ? ''
             : `(${days.map(i => __(WEEKDAY[i])).join(' / ')})`

@@ -28,20 +28,20 @@ ItemIcon.propTypes = {
 }
 
 // React Elements
-const MatRow = ({ stageText,rowCnt,isFirst,isLast, day, assistants, upgrade, items, development, improvement }) => {
+const MatRow = ({ stageText,rowCnt,isFirst, day, assistants, upgrade, items, development, improvement }) => {
 
-    let hishoCol = assistants.map(hisho => (
-        <div className="hisho-col" key={hisho.name}>
-            {hisho.name}
+    let hishoCol = assistants.map(assistant => (
+        (assistant.days.includes(day) || day === -1) && (<div className="hisho-col" key={assistant.name}>
+            {assistant.name}
             {day === -1 && (
                 <>
                     <br />
                     <span className="available-days">
-          {hisho.dayText}
+          {assistant.dayText}
         </span>
                 </>
             )}
-        </div>
+        </div>)
     ));
 
   let stageRow = ''
