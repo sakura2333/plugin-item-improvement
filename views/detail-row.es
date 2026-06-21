@@ -16,7 +16,7 @@ import {
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const parseItem = ($equips, $useitems, itemId, count,type, available) => {
+const parseItem = ($equips, $useitems, itemId, count,type, useitemAvailable,available) => {
   // console.log('availableitem',available[itemId])
   //type 0 武器
   //type 1 useitem
@@ -28,6 +28,7 @@ const parseItem = ($equips, $useitems, itemId, count,type, available) => {
       count:count,
       id: itemId,
       type: 'useitem',
+      available: useitemAvailable[itemId] ? useitemAvailable[itemId].api_count : 0,
     }
   }
   else {
@@ -48,9 +49,10 @@ const DetailRow = connect(state =>
     $const: constSelector(state) || {},
     chains: adjustedRemodelChainsSelector(state),
     uniqMap: shipUniqueMapSelector(state),
+    useitemAvailable: state.info.useitems,
     available: equipAvailableSelector(state),
   })
-)(({ row: row, day, $const: { $equips, $useitems },  available }) => {
+)(({ row: row, day, $const: { $equips, $useitems }, useitemAvailable, available }) => {
   const result = []
   row.improvementList.forEach((improvement,improvementIndex) => {
     const { baseResource, stageList, shipWeekList } = improvement
@@ -88,6 +90,7 @@ const DetailRow = connect(state =>
               consumable.id,
               consumable.count,
               consumable.type,
+              useitemAvailable,
               available
           )
       )
