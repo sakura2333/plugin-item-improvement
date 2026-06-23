@@ -1,4 +1,5 @@
 import classnames from 'classnames'
+import fs from 'fs'
 import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 import { resolve } from 'path'
@@ -25,13 +26,8 @@ class StaticUseitemIcon extends Component {
     const classNames = classnames(
       useSVGIcon ? 'svg' : 'png',
       className)
-    let _src = fallback; // 默认兜底
-
-    try {
-      _src = resolve(__dirname,`../assets/icon/${useitemId}.png`,);
-    } catch (e) {
-      _src = fallback;
-    }
+    const pngSrc = resolve(__dirname, `../assets/icon/${useitemId}.png`)
+    const _src = fs.existsSync(pngSrc) ? pngSrc : fallback
     return (
       <img
         src={_src}

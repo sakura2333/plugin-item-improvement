@@ -16,16 +16,21 @@ import {
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 const WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-const parseItem = ($equips, $useitems, itemId, count,type, useitemAvailable,available) => {
+const isAvailableOnDay = (improvement, day) =>
+  day === -1 || (improvement.shipWeekList || []).some(shipWeek => (shipWeek.week || [])[day])
+
+const fallbackName = itemId => `#${itemId}`
+
+const parseItem = ($equips, $useitems, itemId, count, type, useitemAvailable, available) => {
   // console.log('availableitem',available[itemId])
   //type 0 武器
   //type 1 useitem
   if (type === 1) {
     // console.log('itemstring', itemId)
     return {
-      icon:itemId,
-      name: _.get($useitems, [itemId, 'api_name']),
-      count:count,
+      icon: itemId,
+      name: _.get($useitems, [itemId, 'api_name']) || fallbackName(itemId),
+      count,
       id: itemId,
       type: 'useitem',
       available: useitemAvailable[itemId] ? useitemAvailable[itemId].api_count : 0,
@@ -33,8 +38,8 @@ const parseItem = ($equips, $useitems, itemId, count,type, useitemAvailable,avai
   }
   else {
     return {
-      icon: _.get($equips, [itemId, 'api_type', 3]),
-      name: _.get($equips, [itemId, 'api_name']),
+      icon: _.get($equips, [itemId, 'api_type', 3]) || null,
+      name: _.get($equips, [itemId, 'api_name']) || fallbackName(itemId),
       count,
       id: itemId,
       type: 'item',
@@ -54,8 +59,11 @@ const DetailRow = connect(state =>
   })
 )(({ row: row, day, $const: { $equips, $useitems }, useitemAvailable, available }) => {
   const result = []
-  row.improvementList.forEach((improvement,improvementIndex) => {
-    const { baseResource, stageList, shipWeekList } = improvement
+  const visibleImprovements = (row.improvementList || [])
+    .filter(improvement => isAvailableOnDay(improvement, day))
+
+  visibleImprovements.forEach((improvement, improvementIndex) => {
+    const { stageList, shipWeekList } = improvement
     const assistants = shipWeekList.map(shipWeek => {
       const days = shipWeek.week
           .map((v, i) => (v ? i : null))
@@ -105,8 +113,8 @@ const DetailRow = connect(state =>
         const itemId = stage.targetWeapon.id
         upgradeInfo.id = stage.targetWeapon.id
         upgradeInfo.level = stage.targetWeapon.level
-        upgradeInfo.icon = _.get($equips, [itemId, 'api_type', 3])
-        upgradeInfo.name = _.get($equips, [itemId, 'api_name'])
+        upgradeInfo.icon = _.get($equips, [itemId, 'api_type', 3]) || null
+        upgradeInfo.name = _.get($equips, [itemId, 'api_name']) || fallbackName(itemId)
       }
 
       result.push(
@@ -126,7 +134,11 @@ const DetailRow = connect(state =>
       )
     })
   })
-  const [fuel, ammo, steel, bauxite] = row.improvementList[0].baseResource
+  if (visibleImprovements.length === 0 || result.length === 0) {
+    return null
+  }
+
+  const [fuel, ammo, steel, bauxite] = visibleImprovements[0].baseResource
 
   return (
     <div>

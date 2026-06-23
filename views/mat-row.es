@@ -8,22 +8,35 @@ const { __ } = window.i18n['poi-plugin-item-improvement2']
 const { __: __r } = window.i18n.resources
 
 
-const ItemIcon = ({ item, ...props }) => item.type === 'useitem'
-  ? <UseitemIcon
-    useitemId={item.icon}
-    className={'useitem'}
-    {...props}
-  />
-  : <SlotitemIcon
-    slotitemId={item.icon}
-    className="equip-icon"
-    {...props}
-  />
+const ItemIcon = ({ item, ...props }) => {
+  if (item.type === 'useitem') {
+    return (
+      <UseitemIcon
+        useitemId={item.icon}
+        className="useitem"
+        {...props}
+      />
+    )
+  }
+
+  if (item.icon) {
+    return (
+      <SlotitemIcon
+        slotitemId={item.icon}
+        className="equip-icon"
+        {...props}
+      />
+    )
+  }
+
+  return <span className="missing-equip-icon">{`#${item.id}`}</span>
+}
 
 ItemIcon.propTypes = {
   item: PropTypes.shape({
+    id: PropTypes.number.isRequired,
     type: PropTypes.string.isRequired,
-    icon: PropTypes.number.isRequired,
+    icon: PropTypes.number,
   }).isRequired,
 }
 
@@ -54,12 +67,12 @@ const MatRow = ({ stageText,rowCnt,isFirst, day, assistants, upgrade, items, dev
         star = <span> <FontAwesome name="star" />{` ${upgrade.level}`}</span>
       }
       stageRow = (<div>
-        <SlotitemIcon slotitemId={upgrade.icon} className="equip-icon" />
+        {!!upgrade.icon && <SlotitemIcon slotitemId={upgrade.icon} className="equip-icon" />}
         {window.i18n.resources.__(upgrade.name)}
         {star}
       </div>)
    } else {
-       return ""
+       return null
    }
 
 
@@ -82,8 +95,7 @@ const MatRow = ({ stageText,rowCnt,isFirst, day, assistants, upgrade, items, dev
         <div>
           {
             items.map(item => (
-              !!item.icon &&
-              <div key={item.icon}>
+              <div key={`${item.type}-${item.id}`}>
                 {item.count} ×
               <ItemIcon
                 item={item}
@@ -108,7 +120,8 @@ MatRow.propTypes = {
     items: PropTypes.arrayOf(PropTypes.object).isRequired,
     upgrade: PropTypes.shape({
         level: PropTypes.number.isRequired,
-        icon: PropTypes.number.isRequired,
+        icon: PropTypes.number,
+        id: PropTypes.number.isRequired,
         name: PropTypes.string.isRequired,
     }).isRequired,
     assistants: PropTypes.arrayOf(

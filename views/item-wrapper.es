@@ -35,10 +35,10 @@ export const ItemWrapper = connect(
       const planCount = plan[k]
       const actualCount = levels.filter( lvl => lvl >= star ).length
       return { star, planCount, actualCount }
-    })
+    }).sort((x, y) => x.star - y.star)
     let currentPlan = {}
-    for (let i = 0; i <= 10; i++) {
-      currentPlan = planArr[i] || currentPlan
+    for (let i = 0; i < planArr.length; i++) {
+      currentPlan = planArr[i]
       if (currentPlan.planCount > currentPlan.actualCount) break
     }
     return (
