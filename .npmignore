@@ -1,2 +1,5 @@
 *.es
 package-lock.json
+.idea/
+.DS_Store
+.eslintrc.js

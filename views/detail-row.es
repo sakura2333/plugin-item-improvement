@@ -54,7 +54,7 @@ const DetailRow = connect(state =>
     $const: constSelector(state) || {},
     chains: adjustedRemodelChainsSelector(state),
     uniqMap: shipUniqueMapSelector(state),
-    useitemAvailable: state.info.useitems,
+    useitemAvailable: _.get(state, 'info.useitems', {}),
     available: equipAvailableSelector(state),
   })
 )(({ row: row, day, $const: { $equips, $useitems }, useitemAvailable, available }) => {
