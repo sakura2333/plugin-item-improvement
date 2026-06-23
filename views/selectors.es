@@ -151,11 +151,9 @@ export const equipLevelStatSelector = createSelector(
 )
 
 // base data is dependent on wctf-db and const
-const baseImprovementDataSelector = createSelector(
+export const baseImprovementDataSelector = createSelector(
     [
         constSelector,
-        adjustedRemodelChainsSelector,
-        shipUniqueMapSelector,
     ],
     ($const) => _(LOCAL_ARSENAL)
         .keys()
@@ -201,10 +199,11 @@ export const improvementDataSelector = createSelector(
     if (!plans[id] || _.keys(plans[id]).length === 0) {
       return item
     }
+    const itemLevels = levels[id] || []
     const isNotFull = _(plans[id])
       .entries()
       .some(([star, count]) =>
-        count > _(levels[id]).countBy(lv => lv >= parseInt(star, 10))
+        count > itemLevels.filter(lv => lv >= parseInt(star, 10)).length
       )
     return {
       ...item,

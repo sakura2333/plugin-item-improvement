@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.0.12",
+  "version": "1.0.14",
   "description": "use new data source",
   "main": "index.es",
   "scripts": {

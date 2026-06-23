@@ -11,7 +11,7 @@ import {prepareEquipTypeInfo} from './equiptype'
 import {EquipCategoryView} from './equip-category-view'
 import {ActionTypes, ControlPanel} from './control-panel'
 import {Divider} from '../divider'
-import {improvementDataSelector} from '../selectors'
+import {baseImprovementDataSelector} from '../selectors'
 import {getStarcraftPlans} from "./utils";
 
 const { $ } = window
@@ -135,7 +135,7 @@ class Starcraft extends Component {
 const StarcraftArea = connect(
   state => {
     //sort item by normalType -> detailType -> nameString
-    const rawData = improvementDataSelector(state)
+    const rawData = baseImprovementDataSelector(state)
 
     const sortedEquip = fp.flow(
         fp.sortBy([
