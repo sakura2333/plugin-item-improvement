@@ -7,39 +7,175 @@ const { config } = window
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 export const infinityNum = 10000
 
-export const getStarcraftPlans = () => config.get(keyPlans, {})
+const normalizeNumberKey = value => {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) ? value : null
+  }
 
-const modifyPlans = modify => {
-  const oldPlans = config.get( keyPlans, {} )
-  config.set( keyPlans, modify(oldPlans) )
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) {
+    return null
+  }
+
+  return parseInt(value, 10)
 }
 
-// 新增单个装备计划
-export const addNewEquipPlan = id => {
-  if (!id) {
+const normalizePlanId = id => {
+  const parsed = normalizeNumberKey(id)
+  return parsed > 0 ? `${parsed}` : null
+}
+
+const normalizePlanStar = star => {
+  const parsed = normalizeNumberKey(star)
+  return parsed !== null && parsed >= 0 && parsed <= 10 ? `${parsed}` : null
+}
+
+const normalizePlanCount = count => {
+  return Number.isInteger(count) && count > 0 ? count : null
+}
+
+export const isValidPlanCount = count => normalizePlanCount(count) !== null
+
+const normalizeSinglePlan = (plan, { emptyAsDefault = false } = {}) => {
+  if (!_.isPlainObject(plan)) {
+    return null
+  }
+
+  const normalized = {}
+  const stars = Object.keys(plan)
+
+  if (stars.length === 0 && emptyAsDefault) {
+    normalized[0] = infinityNum
+    return normalized
+  }
+
+  stars.forEach(star => {
+    const starKey = normalizePlanStar(star)
+    const count = normalizePlanCount(plan[star])
+    if (starKey && count) {
+      normalized[starKey] = count
+    }
+  })
+
+  return normalized
+}
+
+export const normalizePlans = (plans, options = {}) => {
+  const normalized = {}
+
+  if (!_.isPlainObject(plans)) {
+    return normalized
+  }
+
+  Object.keys(plans || {}).forEach(id => {
+    const idKey = normalizePlanId(id)
+    if (!idKey) {
+      return
+    }
+
+    const plan = normalizeSinglePlan(plans[id], options)
+    if (plan && Object.keys(plan).length > 0) {
+      normalized[idKey] = plan
+    }
+  })
+
+  return normalized
+}
+
+export const normalizeStoredPlans = plans =>
+  normalizePlans(plans, { emptyAsDefault: true })
+
+export const getRawStarcraftPlans = () => config.get(keyPlans, {})
+
+export const getStarcraftPlans = () =>
+  normalizeStoredPlans(getRawStarcraftPlans())
+
+export const migrateStarcraftPlans = () => {
+  const rawPlans = getRawStarcraftPlans()
+  const normalizedPlans = normalizeStoredPlans(rawPlans)
+
+  if (!_.isEqual(rawPlans, normalizedPlans)) {
+    config.set(keyPlans, normalizedPlans)
+  }
+
+  return normalizedPlans
+}
+
+const modifyPlans = modify => {
+  const oldPlans = getStarcraftPlans()
+  const newPlans = normalizePlans(modify(oldPlans))
+  config.set( keyPlans, newPlans )
+}
+
+export const setEquipPlan = (id, star, count) => {
+  const planId = normalizePlanId(id)
+  const planStar = normalizePlanStar(star)
+  const planCount = normalizePlanCount(count)
+  if (!planId || !planStar || !planCount) {
+    console.error('Invalid equipment plan:', id, star, count)
+    return
+  }
+
+  modifyPlans(plans => {
+    const newPlans = { ...plans }
+    newPlans[planId] = { ...(plans[planId] || {}) }
+    newPlans[planId][planStar] = planCount
+    return newPlans
+  })
+}
+
+export const removeEquipPlan = (id, star) => {
+  const planId = normalizePlanId(id)
+  const planStar = normalizePlanStar(star)
+  if (!planId || !planStar) {
+    console.error('Invalid equipment plan:', id, star)
+    return
+  }
+
+  modifyPlans(plans => {
+    if (!plans[planId]) {
+      return plans
+    }
+
+    const newPlans = { ...plans }
+    newPlans[planId] = { ...plans[planId] }
+    delete newPlans[planId][planStar]
+    return newPlans
+  })
+}
+
+export const removeEquipPlans = id => {
+  const planId = normalizePlanId(id)
+  if (!planId) {
     console.error('Invalid equipment id:', id)
     return
   }
 
   modifyPlans(plans => {
     const newPlans = { ...plans }
-
-    // 如果这个装备没有 plan，就先创建空对象
-    if (!newPlans[id]) {
-      newPlans[id] = {}
-    }
-
-    // 初始化第一条 plan
-    initFirstPlan(newPlans, id)
-
+    delete newPlans[planId]
     return newPlans
   })
 }
 
+// 新增单个装备计划
+export const addNewEquipPlan = id => {
+  setEquipPlan(id, 0, infinityNum)
+}
+
 // 通用的初始化 plan 第一条记录
 const initFirstPlan = (plans, id) => {
-  if (Object.keys(plans[id]).length === 0) {
-    plans[id][0] = infinityNum
+  const planId = normalizePlanId(id)
+  if (!planId) {
+    return plans
+  }
+
+  plans[planId] = normalizeSinglePlan(plans[planId])
+  if (!plans[planId]) {
+    plans[planId] = {}
+  }
+
+  if (Object.keys(plans[planId]).length === 0) {
+    plans[planId][0] = infinityNum
   }
   return plans
 }

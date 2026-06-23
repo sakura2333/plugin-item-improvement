@@ -26,11 +26,11 @@ class AddNewEquipView extends Component {
     }
 
     handleAddNewEquip = () => {
-        const { selected } = this.state;
-        if (!selected) return;
+        const { selected } = this.state
+        if (!selected) return
 
-        // 调用新 utils
-        addNewEquipPlan(selected);
+        addNewEquipPlan(selected)
+        this.setState({ selected: null })
     }
 
     render() {

@@ -8,6 +8,7 @@ import { join } from 'path-extra'
 
 import { ItemWrapper } from './item-wrapper'
 import { StarcraftArea } from './starcraft/starcraft-area'
+import { migrateStarcraftPlans } from './starcraft/utils'
 import {
   improvementDataSelector,
   improveItemIdsByDaySelector, starCraftPlanSelector,
@@ -39,6 +40,10 @@ export const ItemInfoArea = connect(state => ({
 
   state = {
     day: getJSTDayofWeek(),
+  }
+
+  componentDidMount() {
+    migrateStarcraftPlans()
   }
 
   handleKeyChange = key => {

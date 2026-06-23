@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import {
   Button,
 } from 'react-bootstrap'
-import { starText, modifyPlans } from './utils'
+import { removeEquipPlan, starText } from './utils'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 
@@ -19,15 +19,7 @@ class PlanView extends Component {
 
   handleRemove = () => {
     const { mstId, star } = this.props
-    modifyPlans( plans => {
-      const newPlans = { ...plans }
-      newPlans[mstId] = { ...plans[mstId] }
-      delete newPlans[mstId][star]
-      if (Object.keys(newPlans[mstId]).length === 0) {
-        delete newPlans[mstId]
-      }
-      return newPlans
-    })
+    removeEquipPlan(mstId, star)
   }
   render() {
     const { star, planCount, actualCount, viewMode } = this.props

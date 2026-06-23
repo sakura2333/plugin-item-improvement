@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { ListGroup, ListGroupItem } from 'react-bootstrap'
+import _ from 'lodash'
 
 import { EquipView } from './equip-view'
 import { AddNewEquipView } from './add-new-equip-view'

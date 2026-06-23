@@ -7,9 +7,8 @@ import {
   FormControl,
   Checkbox,
 } from 'react-bootstrap'
-import {infinityNum} from './utils'
 import NumericInput from 'react-numeric-input'
-import { starText, modifyPlans } from './utils'
+import { infinityNum, isValidPlanCount, removeEquipPlan, setEquipPlan, starText } from './utils'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 
@@ -32,18 +31,20 @@ class PlanModifyControl extends Component {
 
   // The button action depends on current state
   getCurrentAction = () => {
-    if (typeof this.state.planCount !== 'number')
-      return 'invalid'
-
     const { star, planCount, isInfinity } = this.state
     const oldPlanCount = this.props.plans[star]
+    const shouldRemove = planCount === 0 && !isInfinity
+
+    if (!isInfinity && !shouldRemove && !isValidPlanCount(planCount)) {
+      return 'invalid'
+    }
 
     if (oldPlanCount) {
       // we are editing an existing one
-      return planCount === 0 && !isInfinity ? 'remove' : 'modify'
+      return shouldRemove ? 'remove' : 'modify'
     } else {
       // we are creating a new one
-      return planCount === 0 && !isInfinity ? 'invalid' : 'add'
+      return shouldRemove ? 'invalid' : 'add'
     }
   }
 
@@ -63,23 +64,11 @@ class PlanModifyControl extends Component {
 
     const mstId = this.props.mstId
     if (action === 'add' || action === 'modify') {
-      modifyPlans( plans => {
-        const newPlans = { ...plans }
-        // it's safe to assume that plans[mstId] must exist at this point
-        newPlans[mstId] = { ...plans[mstId] }
-        newPlans[mstId][star] = isInfinity ? infinityNum : planCount
-        return newPlans
-      })
+      setEquipPlan(mstId, star, isInfinity ? infinityNum : planCount)
       return
     }
     if (action === 'remove') {
-      modifyPlans( plans => {
-        const newPlans = { ...plans }
-        // it's safe to assume that plans[mstId] must exist at this point
-        newPlans[mstId] = { ...plans[mstId] }
-        delete newPlans[mstId][star]
-        return newPlans
-      })
+      removeEquipPlan(mstId, star)
       return
     }
 

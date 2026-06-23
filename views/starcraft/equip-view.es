@@ -7,7 +7,7 @@ import { SlotitemIcon } from 'views/components/etc/icon'
 
 import { PlanView } from './plan-view'
 import { PlanModifyControl } from './plan-modify-control'
-import { modifyPlans } from './utils'
+import { removeEquipPlans } from './utils'
 import { itemLevelStatFactory } from '../selectors'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
@@ -34,11 +34,7 @@ const EquipView = connect(
   }
 
   handleRemove = mstId => () => {
-    modifyPlans( plans => {
-      const newPlans = { ...plans }
-      delete newPlans[mstId]
-      return newPlans
-    })
+    removeEquipPlans(mstId)
   }
 
   render() {

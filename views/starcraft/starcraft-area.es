@@ -11,8 +11,7 @@ import {prepareEquipTypeInfo} from './equiptype'
 import {EquipCategoryView} from './equip-category-view'
 import {ActionTypes, ControlPanel} from './control-panel'
 import {Divider} from '../divider'
-import {baseImprovementDataSelector} from '../selectors'
-import {getStarcraftPlans} from "./utils";
+import {baseImprovementDataSelector, starCraftPlanSelector} from '../selectors'
 
 const { $ } = window
 
@@ -24,11 +23,12 @@ $('#fontawesome-css')
 class Starcraft extends Component {
   static propTypes = {
     $equips: PropTypes.object.isRequired,
-    equipTypes: PropTypes.shape({
+    equipTypes: PropTypes.objectOf(PropTypes.shape({
       api_id: PropTypes.number.isRequired,
       api_name: PropTypes.string.isRequired,
       equips: PropTypes.arrayOf(PropTypes.object).isRequired,
-    }).isRequired,
+    })).isRequired,
+    plans: PropTypes.object.isRequired,
   }
 
   static prepareAutoCollapse(props) {
@@ -47,6 +47,37 @@ class Starcraft extends Component {
     super()
     this.state = { ...Starcraft.prepareAutoCollapse(props), viewMode: false }
     this.viewRef = null
+  }
+
+  componentDidUpdate(prevProps) {
+    if (_.isEqual(prevProps.plans, this.props.plans) &&
+        _.isEqual(prevProps.equipTypes, this.props.equipTypes)) {
+      return
+    }
+
+    const prevAutoCollapsed = Starcraft.prepareAutoCollapse(prevProps).equipTypeCollapsed
+    const nextAutoCollapsed = Starcraft.prepareAutoCollapse(this.props).equipTypeCollapsed
+
+    this.setState(prevState => {
+      const equipTypeCollapsed = { ...prevState.equipTypeCollapsed }
+      let changed = false
+
+      Object.keys(nextAutoCollapsed).forEach(k => {
+        if (!(k in equipTypeCollapsed) || prevAutoCollapsed[k] !== nextAutoCollapsed[k]) {
+          equipTypeCollapsed[k] = nextAutoCollapsed[k]
+          changed = true
+        }
+      })
+
+      Object.keys(equipTypeCollapsed).forEach(k => {
+        if (!(k in nextAutoCollapsed)) {
+          delete equipTypeCollapsed[k]
+          changed = true
+        }
+      })
+
+      return changed ? { equipTypeCollapsed } : null
+    })
   }
 
   handleToggle = k => () => {
@@ -119,7 +150,7 @@ class Starcraft extends Component {
                 <EquipCategoryView
                     viewMode={viewMode}
                     key={et.api_id}
-                    collapsed={equipTypeCollapsed[k]}
+                    collapsed={Boolean(equipTypeCollapsed[k])}
                     onToggle={this.handleToggle(k)}
                     equipType={et}
                     plans={plans}
@@ -146,14 +177,9 @@ const StarcraftArea = connect(
 
     const mergedEquipTypes = prepareEquipTypeInfo(sortedEquip, state.const.$equipTypes)
 
-    // plans[<equipment master id>] = undefined or object
-    // plans[...][0 .. 10] = number of planned count
-    // connected plans:
-    const plans = getStarcraftPlans()
-
     return {
       equipTypes: mergedEquipTypes,
-      plans,
+      plans: starCraftPlanSelector(state),
       $equips: sortedEquip
     }
   })(Starcraft)
