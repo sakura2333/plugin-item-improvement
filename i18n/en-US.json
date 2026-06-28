@@ -55,5 +55,6 @@
   "changelog_1_0_21_tamanami": "Added support for Tamanami Kai Ni's assistant-specific improvement material route.",
   "changelog_1_0_23_data_package": "Improvement data now comes from the versioned @sakura2333/kancolle-data package.",
   "changelog_1_0_23_no_runtime_sync": "Removed runtime GitHub synchronization; data is installed together with the plugin through npm.",
-  "changelog_1_0_23_shared_icons": "Use-item PNG assets are now shared through the data package by both official and beta plugins."
+  "changelog_1_0_23_shared_icons": "Use-item PNG assets are now shared through the data package by both official and beta plugins.",
+  "changelog_1_0_24_data_patch_range": "Compatible 0.1.x data-package patches can now be resolved during plugin installation or dependency refresh."
 }

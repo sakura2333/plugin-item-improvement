@@ -19,11 +19,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.0.23', '1.0.22']
+  ['1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.0.23', '1.0.22', '1.0.21']
+  ['1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const ships = {

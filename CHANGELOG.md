@@ -9,6 +9,18 @@ All notable changes to `poi-plugin-item-improvement2` are documented here.
 - Add consumer views for equipment acquisition sources and special ship bonuses from `@sakura2333/kancolle-data`.
 - Remove the remaining local compatibility icon after the shared data package contains it.
 
+## [1.0.24] - 2026-06-28
+
+### Changed
+
+- Relaxed the shared data dependency from exact `0.1.0` to the compatible `^0.1.0` range.
+- New plugin installs and dependency refreshes can now consume automatically published `0.1.x` data-only patch releases without requiring a plugin release for every dataset refresh.
+
+### Compatibility
+
+- Data package minor/schema releases remain blocked until the plugin explicitly updates its supported dependency range and schema checks.
+- Existing installed plugins still need their dependency installation to be refreshed before npm can resolve a newer data patch.
+
 ## [1.0.23] - 2026-06-28
 
 ### Added

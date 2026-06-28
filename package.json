@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "use new data source",
   "main": "index.js",
   "scripts": {
@@ -34,7 +34,7 @@
   "dependencies": {
     "dom-to-image": "^2.6.0",
     "react-numeric-input": "^2.2.3",
-    "@sakura2333/kancolle-data": "0.1.0"
+    "@sakura2333/kancolle-data": "^0.1.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",

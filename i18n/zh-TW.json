@@ -55,5 +55,6 @@
   "changelog_1_0_21_tamanami": "新增玉波改二限定改修材料路線支援。",
   "changelog_1_0_23_data_package": "改修資料改為從版本化的 @sakura2333/kancolle-data 資料包讀取。",
   "changelog_1_0_23_no_runtime_sync": "移除執行時 GitHub 同步，資料會透過 npm 相依套件隨外掛安裝。",
-  "changelog_1_0_23_shared_icons": "資材 PNG 已遷移到資料包，並由正式版與 Beta 版共同使用。"
+  "changelog_1_0_23_shared_icons": "資材 PNG 已遷移到資料包，並由正式版與 Beta 版共同使用。",
+  "changelog_1_0_24_data_patch_range": "外掛安裝或重新整理相依套件時，現在可以自動解析相容的 0.1.x 資料包修補版本。"
 }

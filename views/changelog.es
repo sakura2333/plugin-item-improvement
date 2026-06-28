@@ -6,6 +6,12 @@ export const CHANGELOG_BASELINE_VERSION = '1.0.20'
 
 export const CHANGELOG = [
   {
+    version: '1.0.24',
+    items: [
+      'changelog_1_0_24_data_patch_range',
+    ],
+  },
+  {
     version: '1.0.23',
     items: [
       'changelog_1_0_23_data_package',

@@ -55,5 +55,6 @@
   "changelog_1_0_21_tamanami": "玉波改二限定の改修素材ルートに対応しました。",
   "changelog_1_0_23_data_package": "改修データをバージョン管理された @sakura2333/kancolle-data パッケージから読み込むようにしました。",
   "changelog_1_0_23_no_runtime_sync": "起動時の GitHub 同期を廃止し、npm 依存関係としてデータをインストールするようにしました。",
-  "changelog_1_0_23_shared_icons": "アイテム PNG をデータパッケージに移し、正式版とベータ版で共用するようにしました。"
+  "changelog_1_0_23_shared_icons": "アイテム PNG をデータパッケージに移し、正式版とベータ版で共用するようにしました。",
+  "changelog_1_0_24_data_patch_range": "プラグインのインストールまたは依存関係の更新時に、互換性のある 0.1.x データパッケージ更新を取得できるようにしました。"
 }
