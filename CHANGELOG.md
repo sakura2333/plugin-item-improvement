@@ -9,6 +9,35 @@ All notable changes to `poi-plugin-item-improvement2` are documented here.
 - Add consumer views for equipment acquisition sources and special ship bonuses from `@sakura2333/kancolle-data`.
 - Remove the remaining local compatibility icon after the shared data package contains it.
 
+## [1.0.26] - 2026-06-28
+
+### Fixed
+
+- Ensured the local use-item 71 compatibility PNG is explicitly included in official and beta npm packages.
+- Re-encoded the unchanged icon pixels so Git patches and repository updates physically carry the binary asset instead of relying on an existing working-tree copy.
+
+### Changed
+
+- Added an explicit npm `files` allowlist covering runtime JavaScript, localized resources, styles, and all icon assets.
+
+### Validation
+
+- Added a package dry-run assertion that fails when `assets/icon/71.png` is absent from the npm tarball file list.
+- Added PNG signature validation for the compatibility icon.
+
+## [1.0.25] - 2026-06-28
+
+### Changed
+
+- Rewrote the in-app release notes to describe user-visible behavior instead of npm, schema, repository, and packaging implementation details.
+- Added localized user-facing release-note copy for Simplified Chinese, Traditional Chinese, Japanese, and English.
+- Kept detailed engineering changes in this repository `CHANGELOG.md` for development and release auditing.
+
+### Validation
+
+- Added coverage that every in-app changelog key exists in all supported locales.
+- Added coverage preventing technical package terminology from leaking back into the Simplified Chinese in-app release notes.
+
 ## [1.0.24] - 2026-06-28
 
 ### Changed

@@ -4,34 +4,47 @@ export const CURRENT_VERSION = pluginPackage.version
 export const CHANGELOG_CONFIG_KEY = 'poi-plugin-item-improvement2.lastSeenChangelogVersion'
 export const CHANGELOG_BASELINE_VERSION = '1.0.20'
 
+// Keep in-app notes focused on user-visible behavior. Engineering details belong in CHANGELOG.md.
 export const CHANGELOG = [
+  {
+    version: '1.0.26',
+    items: [
+      'changelog_1_0_26_useitem_icon',
+    ],
+  },
+  {
+    version: '1.0.25',
+    items: [
+      'changelog_1_0_25_user_focused',
+    ],
+  },
   {
     version: '1.0.24',
     items: [
-      'changelog_1_0_24_data_patch_range',
+      'changelog_1_0_24_compatible_data_updates',
     ],
   },
   {
     version: '1.0.23',
     items: [
-      'changelog_1_0_23_data_package',
-      'changelog_1_0_23_no_runtime_sync',
-      'changelog_1_0_23_shared_icons',
+      'changelog_1_0_23_offline_ready',
+      'changelog_1_0_23_network_resilience',
+      'changelog_1_0_23_consistent_data',
     ],
   },
   {
     version: '1.0.22',
     items: [
-      'changelog_1_0_22_release_dialog',
-      'changelog_1_0_22_manual_entry',
+      'changelog_1_0_22_auto_notes',
+      'changelog_1_0_22_reopen_notes',
     ],
   },
   {
     version: '1.0.21',
     items: [
-      'changelog_1_0_21_split_data',
-      'changelog_1_0_21_route_tables',
-      'changelog_1_0_21_tamanami',
+      'changelog_1_0_21_stable_data',
+      'changelog_1_0_21_separate_routes',
+      'changelog_1_0_21_tamanami_route',
     ],
   },
 ]

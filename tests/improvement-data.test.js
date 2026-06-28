@@ -1,4 +1,7 @@
 const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+const { execFileSync } = require('child_process')
 const {
   buildAssistantTextByDay,
   buildImprovementItem,
@@ -10,6 +13,7 @@ const {
 
 
 const {
+  CHANGELOG,
   compareVersions,
   getChangelogEntriesSince,
 } = require('../views/changelog.js')
@@ -19,12 +23,79 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.0.24', '1.0.23', '1.0.22']
+  ['1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
+
+const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
+const locales = localeNames.reduce((result, localeName) => {
+  const localePath = path.join(__dirname, '..', 'i18n', `${localeName}.json`)
+  result[localeName] = JSON.parse(fs.readFileSync(localePath, 'utf8'))
+  return result
+}, {})
+
+const changelogKeys = CHANGELOG.reduce(
+  (keys, entry) => keys.concat(entry.items),
+  []
+)
+
+localeNames.forEach(localeName => {
+  changelogKeys.forEach(key => {
+    assert.strictEqual(
+      typeof locales[localeName][key],
+      'string',
+      `${localeName} is missing changelog entry ${key}`
+    )
+    assert.ok(
+      locales[localeName][key].trim().length > 0,
+      `${localeName} has an empty changelog entry ${key}`
+    )
+  })
+})
+
+const technicalTerms = [
+  '@sakura2333/kancolle-data',
+  'npm',
+  'Schema',
+  '0.1.x',
+  'PNG',
+  'GitHub',
+]
+const simplifiedChineseNotes = changelogKeys
+  .map(key => locales['zh-CN'][key])
+  .join('\n')
+technicalTerms.forEach(term => {
+  assert.strictEqual(
+    simplifiedChineseNotes.includes(term),
+    false,
+    `user-facing changelog should not contain technical term: ${term}`
+  )
+})
+
+const projectRoot = path.join(__dirname, '..')
+const compatibilityIconPath = path.join(projectRoot, 'assets', 'icon', '71.png')
+const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+assert.ok(fs.existsSync(compatibilityIconPath), 'compatibility icon 71.png is missing')
+assert.ok(
+  fs.readFileSync(compatibilityIconPath).subarray(0, 8).equals(pngSignature),
+  'compatibility icon 71.png is not a valid PNG'
+)
+
+const dryRunOutput = execFileSync(
+  process.platform === 'win32' ? 'npm.cmd' : 'npm',
+  ['pack', '--dry-run', '--json', '--ignore-scripts'],
+  { cwd: projectRoot, encoding: 'utf8' }
+)
+const dryRun = JSON.parse(dryRunOutput)
+const packedFiles = new Set(dryRun[0].files.map(file => file.path))
+assert.ok(
+  packedFiles.has('assets/icon/71.png'),
+  'npm package is missing assets/icon/71.png'
+)
+
 
 const ships = {
   89: { api_id: 89, api_name: '鳳翔' },
@@ -145,7 +216,6 @@ assert.deepStrictEqual(listProjection.itemIdsByDay[0], [19])
 assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳翔改二')
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
-const fs = require('fs')
 const kancolleData = require('@sakura2333/kancolle-data')
 
 const {
