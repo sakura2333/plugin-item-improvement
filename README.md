@@ -1,27 +1,39 @@
-# Plugin-Item-Improvement
-Show improvable items of the day
-#### Usage
-Put the folder into /path/to/poi/resources/app/plugins.
+# Plugin Item Improvement
 
-#### Data source
-The plugin makes use of equipment improvement data from [Akashi List](https://akashi-list.me/).
+Poi plugin for viewing KanColle equipment improvement schedules, complete recipe routes, costs, and required materials.
 
-## Publishing the beta package
+## Usage
 
-The beta package uses a separate npm package name while keeping the source tree on the official namespace.
+Install the plugin through Poi, or place the package in Poi's plugin directory.
+
+Improvement data and use-item assets are supplied by the local npm dependency `@sakura2333/kancolle-data`; the plugin does not download GitHub data at runtime.
+
+## Development
+
+```bash
+npm ci --include=dev
+npm test
+npm pack --dry-run
+```
+
+The committed lockfile keeps the legacy Poi transpilation toolchain reproducible. CI tests both the locked minimum-compatible data package and the latest compatible data package.
+
+## Publishing
+
+Publish a compatible `@sakura2333/kancolle-data` release before publishing a plugin version that depends on it.
+
+Official package:
+
+```bash
+npm test
+npm publish --registry=https://registry.npmjs.org/
+```
+
+Beta package:
 
 ```bash
 npm run publish:beta:dry-run
 npm run publish:beta
 ```
 
-`publish:beta` temporarily replaces every runtime occurrence of
-`poi-plugin-item-improvement2` with `poi-plugin-item-improvement2-beta`, runs
-`npm publish`, and restores the original files even when publishing fails.
-Arguments after `--` are forwarded to `npm publish`.
-
-## Data package
-
-Improvement data and use-item PNG assets are supplied by the versioned npm dependency
-`@sakura2333/kancolle-data`. The plugin no longer downloads data from GitHub at runtime.
-Publish the data package before publishing a plugin version that depends on it.
+The beta script temporarily changes the package and runtime namespace to `poi-plugin-item-improvement2-beta`, publishes it, and restores the source tree even when publication fails.

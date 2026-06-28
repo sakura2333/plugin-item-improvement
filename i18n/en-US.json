@@ -58,5 +58,6 @@
   "changelog_1_0_22_reopen_notes": "A What’s New button was added to the toolbar so release notes can be reopened at any time.",
   "changelog_1_0_21_stable_data": "Improvement information now loads and updates more reliably.",
   "changelog_1_0_21_separate_routes": "Improvement routes with different materials, costs, or upgrade targets are now shown in separate tables.",
-  "changelog_1_0_21_tamanami_route": "Added Tamanami Kai Ni’s dedicated material route and kept it separate from the normal route."
+  "changelog_1_0_21_tamanami_route": "Added Tamanami Kai Ni’s dedicated material route and kept it separate from the normal route.",
+  "changelog_1_0_27_data_safety": "Improved data safety checks so incomplete or incompatible improvement information is rejected instead of being displayed incorrectly."
 }

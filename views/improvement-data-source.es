@@ -19,6 +19,13 @@ function validateListData(data) {
   if (!data || !data.metadata || !Array.isArray(data.data) || data.data.length !== 8) {
     throw new Error('Invalid improvement list data')
   }
+  if (Number(data.metadata.schemaVersion) !== 2
+    || !Array.isArray(data.metadata.rowSchema)
+    || data.metadata.rowSchema.length !== 2
+    || data.metadata.rowSchema[0] !== 'itemId'
+    || data.metadata.rowSchema[1] !== 'assistantTexts') {
+    throw new Error('Unsupported improvement list schema')
+  }
 
   data.data.forEach((rows, viewIndex) => {
     if (!Array.isArray(rows)) {

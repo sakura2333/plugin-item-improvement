@@ -1,7 +1,7 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.0.26",
-  "description": "use new data source",
+  "version": "1.0.27",
+  "description": "View KanColle equipment improvement schedules, routes, costs, and required materials in Poi",
   "main": "index.js",
   "scripts": {
     "prepack": "poi-util-transpile",
@@ -34,7 +34,7 @@
   "dependencies": {
     "dom-to-image": "^2.6.0",
     "react-numeric-input": "^2.2.3",
-    "@sakura2333/kancolle-data": "^0.1.0"
+    "@sakura2333/kancolle-data": ">=0.1.0 <0.3.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
@@ -63,10 +63,6 @@
     "views/**/*.js",
     "assets/**/*",
     "i18n/*.json",
-    "scripts/publish-beta.js",
-    "tests/improvement-data.test.js",
-    "CHANGELOG.md",
-    "README.md",
-    "REFACTOR_NOTES.md"
+    "README.md"
   ]
 }

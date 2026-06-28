@@ -23,11 +23,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -95,6 +95,19 @@ assert.ok(
   packedFiles.has('assets/icon/71.png'),
   'npm package is missing assets/icon/71.png'
 )
+
+for (const developmentOnlyPath of [
+  'CHANGELOG.md',
+  'REFACTOR_NOTES.md',
+  'scripts/publish-beta.js',
+  'tests/improvement-data.test.js',
+]) {
+  assert.strictEqual(
+    packedFiles.has(developmentOnlyPath),
+    false,
+    `npm package should not contain development-only file: ${developmentOnlyPath}`
+  )
+}
 
 
 const ships = {
@@ -220,16 +233,26 @@ const kancolleData = require('@sakura2333/kancolle-data')
 
 const {
   DATA_PACKAGE_NAME,
-  MAX_SUPPORTED_IMPROVEMENT_SCHEMA_VERSION,
+  SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION,
+  SUPPORTED_IMPROVEMENT_SCHEMA_VERSION,
   getDataPackageManifest,
   getImprovementDataPaths,
   getUseitemIconPath,
+  validateSchemaVersion,
 } = require('../views/data-package.js')
 
 const packageManifest = getDataPackageManifest()
 assert.strictEqual(DATA_PACKAGE_NAME, '@sakura2333/kancolle-data')
 assert.strictEqual(packageManifest.datasets.improvement.schemaVersion, 3)
-assert.strictEqual(MAX_SUPPORTED_IMPROVEMENT_SCHEMA_VERSION, 3)
+assert.strictEqual(SUPPORTED_IMPROVEMENT_SCHEMA_VERSION, 3)
+assert.strictEqual(SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION, 2)
+assert.doesNotThrow(() => validateSchemaVersion(3, 3, 'fixture'))
+for (const invalid of [undefined, null, NaN, 0, 1, 2, 4, 'abc']) {
+  assert.throws(
+    () => validateSchemaVersion(invalid, 3, 'fixture'),
+    /Unsupported fixture schema/
+  )
+}
 assert.ok(fs.existsSync(getImprovementDataPaths().listPath))
 assert.ok(fs.existsSync(getImprovementDataPaths().detailPath))
 assert.ok(fs.existsSync(getUseitemIconPath(57)))
@@ -241,6 +264,7 @@ const detailIds = new Set(
     .map(line => JSON.parse(line).id)
 )
 assert.strictEqual(listAsset.metadata.schemaVersion, 2)
+assert.deepStrictEqual(listAsset.metadata.rowSchema, ['itemId', 'assistantTexts'])
 assert.ok(fs.existsSync(kancolleData.manifestPath))
 assert.ok(fs.existsSync(kancolleData.assets.useitemPath(57)))
 assert.strictEqual(listAsset.data.length, 8)

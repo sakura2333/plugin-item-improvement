@@ -58,5 +58,6 @@
   "changelog_1_0_22_reopen_notes": "工具列新增「更新日誌」按鈕，可隨時回看版本變更。",
   "changelog_1_0_21_stable_data": "改修資訊的載入與更新更加穩定。",
   "changelog_1_0_21_separate_routes": "材料、資材或升級目標不同的改修路線現在會分表顯示。",
-  "changelog_1_0_21_tamanami_route": "補充玉波改二專屬的改修材料路線，避免與一般路線混在一起。"
+  "changelog_1_0_21_tamanami_route": "補充玉波改二專屬的改修材料路線，避免與一般路線混在一起。",
+  "changelog_1_0_27_data_safety": "加強改修資料完整性檢查，遇到不完整或不相容的資料時會拒絕載入，避免顯示錯誤內容。"
 }

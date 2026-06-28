@@ -1,7 +1,8 @@
 import fs from 'fs'
 
 const PACKAGE_NAME = '@sakura2333/kancolle-data'
-const SUPPORTED_IMPROVEMENT_SCHEMA_VERSION = 3
+const IMPROVEMENT_SCHEMA_VERSION = 3
+const IMPROVEMENT_LIST_SCHEMA_VERSION = 2
 
 let dataPackage = null
 let manifest = null
@@ -23,6 +24,15 @@ function loadDataPackage() {
   return dataPackage
 }
 
+function requireExactSchema(value, expected, label) {
+  const schemaVersion = Number(value)
+  if (!Number.isInteger(schemaVersion) || schemaVersion !== expected) {
+    throw new Error(
+      `Unsupported ${label} schema ${value}; supported version is ${expected}`
+    )
+  }
+}
+
 function readManifest() {
   if (manifest) return manifest
 
@@ -37,10 +47,17 @@ function readManifest() {
     throw new Error(`${PACKAGE_NAME} does not contain the improvement dataset`)
   }
 
-  if (Number(improvement.schemaVersion) > SUPPORTED_IMPROVEMENT_SCHEMA_VERSION) {
-    throw new Error(
-      `Unsupported improvement schema ${improvement.schemaVersion}; `
-      + `maximum supported is ${SUPPORTED_IMPROVEMENT_SCHEMA_VERSION}`
+  requireExactSchema(
+    improvement.schemaVersion,
+    IMPROVEMENT_SCHEMA_VERSION,
+    'improvement detail'
+  )
+
+  if (improvement.listSchemaVersion != null) {
+    requireExactSchema(
+      improvement.listSchemaVersion,
+      IMPROVEMENT_LIST_SCHEMA_VERSION,
+      'improvement list'
     )
   }
 
@@ -55,6 +72,9 @@ export const getImprovementDataPaths = () => {
 
   if (!pkg.improvement || !pkg.improvement.listPath || !pkg.improvement.detailPath) {
     throw new Error(`${PACKAGE_NAME} improvement paths are incomplete`)
+  }
+  if (!fs.existsSync(pkg.improvement.listPath) || !fs.existsSync(pkg.improvement.detailPath)) {
+    throw new Error(`${PACKAGE_NAME} improvement files are missing`)
   }
 
   return {
@@ -71,4 +91,7 @@ export const getUseitemIconPath = id => {
 }
 
 export const DATA_PACKAGE_NAME = PACKAGE_NAME
-export const MAX_SUPPORTED_IMPROVEMENT_SCHEMA_VERSION = SUPPORTED_IMPROVEMENT_SCHEMA_VERSION
+export const SUPPORTED_IMPROVEMENT_SCHEMA_VERSION = IMPROVEMENT_SCHEMA_VERSION
+export const SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION = IMPROVEMENT_LIST_SCHEMA_VERSION
+
+export const validateSchemaVersion = requireExactSchema

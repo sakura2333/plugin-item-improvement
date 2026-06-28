@@ -7,7 +7,27 @@ All notable changes to `poi-plugin-item-improvement2` are documented here.
 ### Planned
 
 - Add consumer views for equipment acquisition sources and special ship bonuses from `@sakura2333/kancolle-data`.
-- Remove the remaining local compatibility icon after the shared data package contains it.
+- Remove the remaining local compatibility icon after the minimum supported shared data package advances to a version that always contains it.
+
+## [1.0.27] - 2026-06-28
+
+### Added
+
+- Added GitHub Actions coverage for reproducible dependency installation, transpilation, tests, official package inspection, beta dry-run, and latest compatible data-package verification.
+- Added exact validation for improvement detail schema 3 and list schema 2.
+- Added package tests that reject accidentally published development scripts, tests, and engineering notes.
+
+### Changed
+
+- Expanded the compatible data-package range to `>=0.1.0 <0.3.0`, allowing the plugin to use data package 0.2.x while still rejecting the next compatibility boundary.
+- Started tracking `package-lock.json` for reproducible legacy build-tool installation.
+- Updated the npm package description to explain the user-facing plugin purpose.
+- Reduced the published package allowlist to runtime JavaScript, assets, localization files, and the user README; technical `CHANGELOG.md` and refactor notes remain in the source repository only.
+
+### Fixed
+
+- Fixed missing, non-numeric, zero, older, or otherwise incompatible improvement schema values being accepted because the previous check rejected only values greater than 3.
+- Fixed list data accepting an unexpected row schema before normalization.
 
 ## [1.0.26] - 2026-06-28
 
