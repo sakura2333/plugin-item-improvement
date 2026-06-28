@@ -6,8 +6,10 @@ import { resolve } from 'path'
 import { connect } from 'react-redux'
 import { configSelector } from 'views/utils/selectors'
 import _ from 'lodash'
+import { getUseitemIconPath } from './data-package'
 
-const fallback = resolve(__dirname,'../assets/icon/useitem.svg',)
+const fallback = resolve(__dirname, '../assets/icon/useitem.svg')
+const legacyIcon = id => resolve(__dirname, `../assets/icon/${id}.png`)
 
 class StaticUseitemIcon extends Component {
   static propTypes = {
@@ -16,24 +18,28 @@ class StaticUseitemIcon extends Component {
     useSVGIcon: PropTypes.bool.isRequired,
   }
 
-  // all fields are primitives
-  // so shallow / deep comparisons are hardly making any difference
   shouldComponentUpdate = nextProps =>
-    ! _.isEqual(nextProps, this.props)
+    !_.isEqual(nextProps, this.props)
 
   render() {
-    const {useitemId, className, useSVGIcon} = this.props
+    const { useitemId, className, useSVGIcon } = this.props
     const classNames = classnames(
       useSVGIcon ? 'svg' : 'png',
-      className)
-    const pngSrc = resolve(__dirname, `../assets/icon/${useitemId}.png`)
-    const _src = fs.existsSync(pngSrc) ? pngSrc : fallback
+      className
+    )
+    const packageIcon = getUseitemIconPath(useitemId)
+    const legacyPath = legacyIcon(useitemId)
+    const src = packageIcon && fs.existsSync(packageIcon)
+      ? packageIcon
+      : (fs.existsSync(legacyPath) ? legacyPath : fallback)
+
     return (
       <img
-        src={_src}
+        src={src}
         alt={`useitem #${useitemId}`}
         className={classNames}
-        /> )
+      />
+    )
   }
 }
 

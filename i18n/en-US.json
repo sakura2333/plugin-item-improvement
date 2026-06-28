@@ -44,5 +44,16 @@
   "New equipment plan": "New equipment plan",
   "Expand only non-empty categories": "Expand only non-empty categories",
   "Starcraft": "Starcraft",
-  "Your personal planner for crafting stars": "Your personal planner for crafting stars"
+  "Your personal planner for crafting stars": "Your personal planner for crafting stars",
+  "What's New": "What's New",
+  "Release Notes": "Release Notes",
+  "Close": "Close",
+  "changelog_1_0_22_release_dialog": "Added a release notes dialog that appears once after a plugin update.",
+  "changelog_1_0_22_manual_entry": "Added a What's New button so release notes can be opened again at any time.",
+  "changelog_1_0_21_split_data": "Separated improvement list data from detailed route data and enabled independent data updates.",
+  "changelog_1_0_21_route_tables": "Improvement routes with different materials, costs, or upgrade targets are now shown in separate tables.",
+  "changelog_1_0_21_tamanami": "Added support for Tamanami Kai Ni's assistant-specific improvement material route.",
+  "changelog_1_0_23_data_package": "Improvement data now comes from the versioned @sakura2333/kancolle-data package.",
+  "changelog_1_0_23_no_runtime_sync": "Removed runtime GitHub synchronization; data is installed together with the plugin through npm.",
+  "changelog_1_0_23_shared_icons": "Use-item PNG assets are now shared through the data package by both official and beta plugins."
 }

@@ -1,21 +1,24 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { Nav, NavItem, Col, Grid } from 'react-bootstrap'
-import _ from 'lodash'
+import { Button, Nav, NavItem, Col, Grid } from 'react-bootstrap'
 import fp from 'lodash/fp'
 import { join } from 'path-extra'
 
 import { ItemWrapper } from './item-wrapper'
+import { ChangelogModal } from './changelog-modal'
+import {
+  CHANGELOG, CHANGELOG_CONFIG_KEY, CURRENT_VERSION, getChangelogEntriesSince,
+} from './changelog'
 import { StarcraftArea } from './starcraft/starcraft-area'
 import { migrateStarcraftPlans } from './starcraft/utils'
 import {
   improvementDataSelector,
   improveItemIdsByDaySelector, starCraftPlanSelector,
 } from './selectors'
-import { getNedbDataVersion, startNedbDataSync, subscribeNedbDataChange } from './nedb-data'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
+const { config } = window
 
 const getJSTDayofWeek = () => {
   const date = new Date()
@@ -30,39 +33,42 @@ export const ItemInfoArea = connect(state => ({
   plans: starCraftPlanSelector(state),
   data: improvementDataSelector(state),
   idByDay: improveItemIdsByDaySelector(state),
-  $equips: _.get(state, 'const.$ships', {}),
-  dbVersion: getNedbDataVersion(),
 }))(class itemInfoArea extends Component {
   static propTypes = {
     plans: PropTypes.object.isRequired,
-    $equips: PropTypes.object.isRequired,
     idByDay: PropTypes.objectOf(PropTypes.array).isRequired,
-    data: PropTypes.objectOf(PropTypes.object).isRequired,
+    data: PropTypes.arrayOf(PropTypes.object).isRequired,
     dispatch: PropTypes.func.isRequired,
-    dbVersion: PropTypes.number.isRequired,
   }
 
   state = {
     day: getJSTDayofWeek(),
+    changelogEntries: [],
+    showChangelog: false,
   }
 
   componentDidMount() {
-    const { dbVersion, dispatch } = this.props
-
     migrateStarcraftPlans()
-    this.unsubscribeNedbDataChange = subscribeNedbDataChange(() => {
-      dispatch({ type: 'poi-plugin-item-improvement2/NEDB_DATA_CHANGED' })
-    })
-    startNedbDataSync()
-    if (dbVersion !== getNedbDataVersion()) {
-      dispatch({ type: 'poi-plugin-item-improvement2/NEDB_DATA_CHANGED' })
+    const lastSeenVersion = config.get(CHANGELOG_CONFIG_KEY, null)
+    const changelogEntries = getChangelogEntriesSince(lastSeenVersion)
+    if (changelogEntries.length > 0) {
+      this.setState({
+        changelogEntries,
+        showChangelog: true,
+      })
     }
   }
 
-  componentWillUnmount() {
-    if (this.unsubscribeNedbDataChange) {
-      this.unsubscribeNedbDataChange()
-    }
+  handleCloseChangelog = () => {
+    config.set(CHANGELOG_CONFIG_KEY, CURRENT_VERSION)
+    this.setState({ showChangelog: false })
+  }
+
+  handleShowChangelog = () => {
+    this.setState({
+      changelogEntries: CHANGELOG,
+      showChangelog: true,
+    })
   }
 
   handleKeyChange = key => {
@@ -86,7 +92,7 @@ export const ItemInfoArea = connect(state => ({
 
   render() {
     const { day } = this.state
-    const { plans, $equips } = this.props
+    const { plans } = this.props
 
     return (
         <div id="item-improvement">
@@ -94,17 +100,26 @@ export const ItemInfoArea = connect(state => ({
             <link rel="stylesheet" href={join(__dirname, '..', 'assets', 'main.css')} />
             <Grid className="vertical-center" style={{ minHeight: 45 }}>
               <Col xs={12} style={{ padding: 0 }}>
-                <Nav className="main-nav" bsStyle="pills" activeKey={this.state.day} onSelect={this.handleKeyChange}>
-                  <NavItem eventKey={0}>{__('Sunday')}</NavItem>
-                  <NavItem eventKey={1}>{__('Monday')}</NavItem>
-                  <NavItem eventKey={2}>{__('Tuesday')}</NavItem>
-                  <NavItem eventKey={3}>{__('Wednesday')}</NavItem>
-                  <NavItem eventKey={4}>{__('Thursday')}</NavItem>
-                  <NavItem eventKey={5}>{__('Friday')}</NavItem>
-                  <NavItem eventKey={6}>{__('Saturday')}</NavItem>
-                  <NavItem eventKey={-1}>{__('All')}</NavItem>
-                  <NavItem eventKey={10}>{__('Starcraft')}</NavItem>
-                </Nav>
+                <div className="improvement-toolbar">
+                  <Nav className="main-nav" bsStyle="pills" activeKey={this.state.day} onSelect={this.handleKeyChange}>
+                    <NavItem eventKey={0}>{__('Sunday')}</NavItem>
+                    <NavItem eventKey={1}>{__('Monday')}</NavItem>
+                    <NavItem eventKey={2}>{__('Tuesday')}</NavItem>
+                    <NavItem eventKey={3}>{__('Wednesday')}</NavItem>
+                    <NavItem eventKey={4}>{__('Thursday')}</NavItem>
+                    <NavItem eventKey={5}>{__('Friday')}</NavItem>
+                    <NavItem eventKey={6}>{__('Saturday')}</NavItem>
+                    <NavItem eventKey={-1}>{__('All')}</NavItem>
+                    <NavItem eventKey={10}>{__('Starcraft')}</NavItem>
+                  </Nav>
+                  <Button
+                      bsSize="small"
+                      bsStyle="link"
+                      className="changelog-button"
+                      onClick={this.handleShowChangelog}>
+                    {__("What's New")}
+                  </Button>
+                </div>
               </Col>
             </Grid>
             <Grid className="list-container">
@@ -116,13 +131,16 @@ export const ItemInfoArea = connect(state => ({
                             row={row}
                             key={row.id}
                             day={day}
-                            plans={plans}
-                            $equips={$equips} />
+                            plans={plans} />
                     )) :
                     <StarcraftArea />
               }
             </Grid>
           </div>
+          <ChangelogModal
+              entries={this.state.changelogEntries}
+              onHide={this.handleCloseChangelog}
+              show={this.state.showChangelog} />
         </div>
     )
   }

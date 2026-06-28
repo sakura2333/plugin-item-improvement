@@ -27,16 +27,13 @@
   "upgrade": "更新",
   "Equipment": "装備",
   "All": "全ての装備",
-
   "Content": "内容",
   "View": "ビュー",
-
   "Default": "デフォルト",
   "Expand All": "すべて展開",
   "Collapse All": "すべて格納",
   "View Mode": "ビューモード",
   "Export as Image": "画像として保存",
-
   "Owned": "保有",
   "Add": "作成",
   "Remove": "削除",
@@ -44,11 +41,19 @@
   "Invalid": "無効",
   "Infinity": "無上限",
   "Available": " (利用可能: %d)",
-
-
   "New equipment plan": "新しい改修計画",
   "Expand only non-empty categories": "改修計画がある装備種類だけを展開",
-
   "Starcraft": "スタークラフト",
-  "Your personal planner for crafting stars": "装備改修計画"
+  "Your personal planner for crafting stars": "装備改修計画",
+  "What's New": "更新履歴",
+  "Release Notes": "更新履歴",
+  "Close": "閉じる",
+  "changelog_1_0_22_release_dialog": "プラグイン更新後に一度だけ表示される更新履歴ダイアログを追加しました。",
+  "changelog_1_0_22_manual_entry": "更新履歴をいつでも再表示できるボタンを追加しました。",
+  "changelog_1_0_21_split_data": "改修一覧データと詳細ルートデータを分離し、データを独立して更新できるようにしました。",
+  "changelog_1_0_21_route_tables": "必要装備、資材、更新先が異なる改修ルートを別々の表で表示するようにしました。",
+  "changelog_1_0_21_tamanami": "玉波改二限定の改修素材ルートに対応しました。",
+  "changelog_1_0_23_data_package": "改修データをバージョン管理された @sakura2333/kancolle-data パッケージから読み込むようにしました。",
+  "changelog_1_0_23_no_runtime_sync": "起動時の GitHub 同期を廃止し、npm 依存関係としてデータをインストールするようにしました。",
+  "changelog_1_0_23_shared_icons": "アイテム PNG をデータパッケージに移し、正式版とベータ版で共用するようにしました。"
 }

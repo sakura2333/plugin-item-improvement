@@ -1,0 +1,61 @@
+const pluginPackage = require('../package.json')
+
+export const CURRENT_VERSION = pluginPackage.version
+export const CHANGELOG_CONFIG_KEY = 'poi-plugin-item-improvement2.lastSeenChangelogVersion'
+export const CHANGELOG_BASELINE_VERSION = '1.0.20'
+
+export const CHANGELOG = [
+  {
+    version: '1.0.23',
+    items: [
+      'changelog_1_0_23_data_package',
+      'changelog_1_0_23_no_runtime_sync',
+      'changelog_1_0_23_shared_icons',
+    ],
+  },
+  {
+    version: '1.0.22',
+    items: [
+      'changelog_1_0_22_release_dialog',
+      'changelog_1_0_22_manual_entry',
+    ],
+  },
+  {
+    version: '1.0.21',
+    items: [
+      'changelog_1_0_21_split_data',
+      'changelog_1_0_21_route_tables',
+      'changelog_1_0_21_tamanami',
+    ],
+  },
+]
+
+const normalizeVersion = version => String(version || '')
+  .replace(/^v/i, '')
+  .split('.')
+  .map(part => Number.parseInt(part, 10) || 0)
+
+export const compareVersions = (left, right) => {
+  const a = normalizeVersion(left)
+  const b = normalizeVersion(right)
+  const length = Math.max(a.length, b.length)
+
+  for (let index = 0; index < length; index += 1) {
+    const leftPart = a[index] || 0
+    const rightPart = b[index] || 0
+
+    if (leftPart > rightPart) return 1
+    if (leftPart < rightPart) return -1
+  }
+
+  return 0
+}
+
+export const getChangelogEntriesSince = lastSeenVersion => {
+  const baseline = lastSeenVersion || CHANGELOG_BASELINE_VERSION
+
+  return CHANGELOG.filter(entry => (
+    compareVersions(entry.version, baseline) > 0
+    && compareVersions(entry.version, CURRENT_VERSION) <= 0
+  ))
+}

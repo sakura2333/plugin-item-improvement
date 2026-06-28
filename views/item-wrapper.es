@@ -17,7 +17,6 @@ export const ItemWrapper = connect(
     row: PropTypes.object.isRequired,
     day: PropTypes.number.isRequired,
     plans: PropTypes.object.isRequired,
-    // $equips: PropTypes.object.isRequired,
     levels: PropTypes.array.isRequired,
   }
 
@@ -49,7 +48,7 @@ export const ItemWrapper = connect(
             id={row.id}
             icon={row.api_type[3]}
             name={row.api_name}
-            assistants={row.assistants[day]}
+            assistantText={row.assistantTextByDay[day] || ''}
             day={day}
             currentPlan={currentPlan}
           />

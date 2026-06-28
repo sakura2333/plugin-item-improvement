@@ -7,7 +7,7 @@ class ItemInfoRow extends Component {
   static propTypes = {
     currentPlan: PropTypes.object.isRequired,
 
-    assistants: PropTypes.string.isRequired,
+    assistantText: PropTypes.string.isRequired,
     icon: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
   }
@@ -45,7 +45,7 @@ class ItemInfoRow extends Component {
           )
         }
         <div className="item-hisho">
-          {this.props.assistants}
+          {this.props.assistantText}
         </div>
       </div>
     )

@@ -1,9 +1,7 @@
 import { ItemInfoArea } from './views/item-info-area'
-import { startNedbDataSync } from './views/nedb-data'
 
 const { config } = window
 
-startNedbDataSync()
 
 export const windowMode = true
 export const reactClass = ItemInfoArea

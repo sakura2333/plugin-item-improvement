@@ -44,7 +44,7 @@ ItemIcon.propTypes = {
 const MatRow = ({ stageText,rowCnt,isFirst, day, assistants, upgrade, items, development, improvement }) => {
 
     let hishoCol = assistants.map(assistant => (
-        (assistant.days.includes(day) || day === -1) && (<div className="hisho-col" key={assistant.name}>
+        (assistant.days.includes(day) || day === -1) && (<div className="hisho-col" key={assistant.key}>
             {assistant.name}
             {day === -1 && (
                 <>
@@ -126,6 +126,7 @@ MatRow.propTypes = {
     }).isRequired,
     assistants: PropTypes.arrayOf(
         PropTypes.shape({
+            key: PropTypes.string.isRequired,
             name: PropTypes.string.isRequired,
             days: PropTypes.arrayOf(PropTypes.number).isRequired,
             fullWeek: PropTypes.bool,

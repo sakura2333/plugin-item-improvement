@@ -27,16 +27,13 @@
   "upgrade": "升级",
   "Equipment": "装备",
   "All": "全部装备",
-
   "Content": "内容",
   "View": "浏览",
-
   "Default": "默认",
   "Expand All": "全部展开",
   "Collapse All": "全部折叠",
   "View Mode": "浏览模式",
   "Export as Image": "导出图片",
-
   "Owned": "持有",
   "Add": "添加",
   "Remove": "删除",
@@ -44,10 +41,19 @@
   "Invalid": "无效",
   "Infinity": "不设上限",
   "Available": " (可用: %d)",
-
   "New equipment plan": "新建装备计划",
   "Expand only non-empty categories": "仅展开内容非空的装备类别",
-
   "Starcraft": "星级争霸",
-  "Your personal planner for crafting stars": "装备改修规划书"
+  "Your personal planner for crafting stars": "装备改修规划书",
+  "What's New": "更新日志",
+  "Release Notes": "更新日志",
+  "Close": "关闭",
+  "changelog_1_0_22_release_dialog": "新增插件升级后仅显示一次的更新日志弹窗。",
+  "changelog_1_0_22_manual_entry": "新增“更新日志”按钮，可随时再次查看版本变化。",
+  "changelog_1_0_21_split_data": "分离改修列表数据与详细路线数据，并支持数据独立更新。",
+  "changelog_1_0_21_route_tables": "材料、资材或升级目标不同的改修路线现在会分表展示。",
+  "changelog_1_0_21_tamanami": "新增玉波改二限定改修材料路线支持。",
+  "changelog_1_0_23_data_package": "改修数据改为从版本化的 @sakura2333/kancolle-data 数据包读取。",
+  "changelog_1_0_23_no_runtime_sync": "移除运行时 GitHub 同步，数据会通过 npm 依赖随插件安装。",
+  "changelog_1_0_23_shared_icons": "资材 PNG 已迁移到数据包，并由正式版与 Beta 版共同使用。"
 }

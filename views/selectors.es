@@ -1,98 +1,52 @@
 import _ from 'lodash'
 import { createSelector } from 'reselect'
 import {
-    constSelector,
-    configSelector,
-    equipsSelector,
-    createDeepCompareArraySelector,
+  constSelector,
+  configSelector,
+  equipsSelector,
+  createDeepCompareArraySelector,
 } from 'views/utils/selectors'
-import {keyPlans, normalizeStoredPlans} from './starcraft/utils'
-import { getLocalNedbData } from './nedb-data'
+import { keyPlans, normalizeStoredPlans } from './starcraft/utils'
+import { getLocalImprovementData } from './improvement-data-source'
+import {
+  buildImprovementItem,
+  createShipNameResolver,
+  normalizeListProjection,
+} from './improvement-data'
 
+const localImprovementDataSelector = () => getLocalImprovementData()
 
-const localNedbDataSelector = () => getLocalNedbData()
-
-const ourShipsSelector = createSelector(
+export const $shipsSelector = createSelector(
   [
     constSelector,
-  ], ({ $ships = {} } = {}) => _($ships)
-    .pickBy(({ api_sortno }) => Boolean(api_sortno))
-    .value()
+  ], $const => _.get($const, '$ships', {})
 )
 
-// the chain starts from each ship, thus incomplete if the ship is not the starting one
-// the adjustedRemodelChainsSelector will return complete chains for all ships
-const remodelChainsSelector = createSelector(
+const localizeResourceName = name => window.i18n.resources.__(name)
+
+const shipNameResolverSelector = createSelector(
   [
-    ourShipsSelector,
-  ], $ships => _($ships)
-    .mapValues(({ api_id: shipId }) => {
-      let current = $ships[shipId]
-      let next = +(current.api_aftershipid || 0)
-      let same = [shipId]
-      while (!same.includes(next) && next > 0) {
-        same = [...same, next]
-        current = $ships[next] || {}
-        next = +(current.api_aftershipid || 0)
-      }
-      return same
-    })
-    .value()
+    $shipsSelector,
+  ], $ships => createShipNameResolver($ships, localizeResourceName)
 )
 
-const beforeShipMapSelector = createSelector(
+const listProjectionSelector = createSelector(
   [
-    ourShipsSelector,
-  ], $ships => _($ships)
-    .filter(ship => +(ship.api_aftershipid || 0) > 0)
-    .map(ship => ([ship.api_aftershipid, ship.api_id]))
-    .fromPairs()
-    .value()
-)
-
-export const uniqueShipIdsSelector = createSelector(
-  [
-    ourShipsSelector,
-    beforeShipMapSelector,
-  ], ($ships, beforeShipMap) => _($ships)
-    .filter(({ api_id }) => !(api_id in beforeShipMap)) // eslint-disable-line camelcase
-    .map(({ api_id }) => api_id) // eslint-disable-line camelcase
-    .value()
-)
-
-export const shipUniqueMapSelector = createSelector(
-  [
-    uniqueShipIdsSelector,
-    remodelChainsSelector,
-  ], (shipIds, chains) => _(shipIds)
-    .flatMap(shipId =>
-      _(chains[shipId]).map(id => ([id, shipId])).value()
-    )
-    .fromPairs()
-    .value()
-)
-
-export const adjustedRemodelChainsSelector = createSelector(
-  [
-    remodelChainsSelector,
-    shipUniqueMapSelector,
-  ], (remodelChains, uniqueMap) => _(uniqueMap)
-    .mapValues(uniqueId => remodelChains[uniqueId])
-    .value()
+    localImprovementDataSelector,
+  ], ({ list }) => normalizeListProjection(list)
 )
 
 export const starCraftPlanSelector = createSelector(
-    [
-        configSelector,
-    ], config => normalizeStoredPlans(_.get(config, keyPlans, {}))
+  [
+    configSelector,
+  ], config => normalizeStoredPlans(_.get(config, keyPlans, {}))
 )
-
 
 export const equipAvailableSelector = createSelector(
   [
     equipsSelector,
   ], equips => _(equips)
-    .filter({'api_level': 0})
+    .filter({ api_level: 0 })
     .groupBy('api_slotitem_id')
     .value()
 )
@@ -106,45 +60,30 @@ export const equipLevelStatSelector = createSelector(
     .value()
 )
 
-// base data is dependent on wctf-db and const
+// Detail normalization remains compatible with the legacy anchor ID + Wiki text shape.
+// The list summary itself is supplied by the backend list projection.
 export const baseImprovementDataSelector = createSelector(
-    [
-        constSelector,
-        localNedbDataSelector,
-    ],
-    ($const, { arsenal, items }) => _(arsenal)
-        .keys()
-        .map(itemId => {
-            const item = items[itemId] || {}
-
-            const assistants = _( _.range(7).concat(-1) )
-                .map(day => {
-                    const list = _(item.improvementList || [])
-                        .flatMap(improvement => {
-                            const shipWeek = improvement.shipWeekList || []
-
-                            return shipWeek
-                                .filter(s => day === -1 || s.week?.[day])
-                                .map(s => s.text)
-                        })
-                        .uniq()
-                        .value()
-
-                    return [day, list.join('/')]
-                })
-                .fromPairs()
-                .value()
-
-            return {
-                ..._.get($const, ['$equips', item.id], {}),
-                ...item,
-                priority: 0,
-                assistants,
-            }
-        })
-        .value()
+  [
+    constSelector,
+    localImprovementDataSelector,
+    shipNameResolverSelector,
+    listProjectionSelector,
+  ], ($const, { items }, resolveShipName, listProjection) => _(items)
+    .values()
+    .map(item => {
+      const normalized = buildImprovementItem(
+        item,
+        _.get($const, ['$equips', item.id], {}),
+        resolveShipName
+      )
+      return {
+        ...normalized,
+        assistantTextByDay: listProjection.assistantTextByItemId[item.id]
+          || normalized.assistantTextByDay,
+      }
+    })
+    .value()
 )
-
 
 export const improvementDataSelector = createSelector(
   [
@@ -159,43 +98,28 @@ export const improvementDataSelector = createSelector(
     const itemLevels = levels[id] || []
     const isNotFull = _(plans[id])
       .entries()
-      .some(([star, count]) =>
+      .some(([star, count]) => (
         count > itemLevels.filter(lv => lv >= parseInt(star, 10)).length
-      )
+      ))
     return {
       ...item,
       priority: isNotFull ? 2 : 1,
     }
   })
-  .value()
+    .value()
 )
 
+// The backend owns the list projection. The selector only exposes its item IDs.
 export const improveItemIdsByDaySelector = createSelector(
-    [
-        localNedbDataSelector,
-    ],
-    ({ arsenalWeekday }) => _(arsenalWeekday)
-        .mapValues(day =>
-            _(day.improvements)
-                .map(([id]) => id)
-                .value()
-        )
-        .value()
-)
-
-const arrayResultWrapper = selector =>
-  createDeepCompareArraySelector(selector, result => result)
-
-export const itemLevelStatFactory = _.memoize(id =>
-  arrayResultWrapper(createSelector(
-    [
-      equipLevelStatSelector,
-    ], equipLevels => equipLevels[id] || []
-  )
-))
-
-export const $shipsSelector = createSelector(
   [
-    constSelector,
-  ], $const => _.get($const, '$ships', {})
+    listProjectionSelector,
+  ], projection => projection.itemIdsByDay
 )
+
+const arrayResultWrapper = selector => createDeepCompareArraySelector(selector, result => result)
+
+export const itemLevelStatFactory = _.memoize(id => arrayResultWrapper(createSelector(
+  [
+    equipLevelStatSelector,
+  ], equipLevels => equipLevels[id] || []
+)))
