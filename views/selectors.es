@@ -1,5 +1,3 @@
-import fs from 'fs'
-import path from 'path'
 import _ from 'lodash'
 import { createSelector } from 'reselect'
 import {
@@ -9,36 +7,10 @@ import {
     createDeepCompareArraySelector,
 } from 'views/utils/selectors'
 import {keyPlans, normalizeStoredPlans} from './starcraft/utils'
+import { getLocalNedbData } from './nedb-data'
 
 
-const ASSETS_DIR = path.join(__dirname, '../assets/db')
-const ARSENAL_PATH = path.join(ASSETS_DIR, 'arsenal_all.nedb')
-const ITEMS_PATH = path.join(ASSETS_DIR, 'items.nedb')
-const WEEKDAY_PATH = path.join(ASSETS_DIR, 'arsenal_weekday.nedb')
-
-/** ---------- 本地 Nedb loader ---------- */
-function loadNedbAsMap(nedbPath, key = 'id') {
-    try {
-        if (!fs.existsSync(nedbPath)) {
-            console.warn('[nedb] file not found:', nedbPath)
-            return {}
-        }
-        const content = fs.readFileSync(nedbPath, 'utf-8')
-        return _(content.split('\n'))
-            .filter(Boolean)
-            .map(line => { try { return JSON.parse(line) } catch (e) { return null } })
-            .filter(Boolean)
-            .keyBy(key)
-            .value()
-    } catch (e) {
-        console.error('[nedb] load failed:', e)
-        return {}
-    }
-}
-
-const LOCAL_ARSENAL = loadNedbAsMap(ARSENAL_PATH, 'id')
-const LOCAL_ITEMS = loadNedbAsMap(ITEMS_PATH, 'id')
-const LOCAL_ARSENAL_WEEKDAY = loadNedbAsMap(WEEKDAY_PATH, 'weekday')
+const localNedbDataSelector = () => getLocalNedbData()
 
 const ourShipsSelector = createSelector(
   [
@@ -138,11 +110,12 @@ export const equipLevelStatSelector = createSelector(
 export const baseImprovementDataSelector = createSelector(
     [
         constSelector,
+        localNedbDataSelector,
     ],
-    ($const) => _(LOCAL_ARSENAL)
+    ($const, { arsenal, items }) => _(arsenal)
         .keys()
         .map(itemId => {
-            const item = LOCAL_ITEMS[itemId] || {}
+            const item = items[itemId] || {}
 
             const assistants = _( _.range(7).concat(-1) )
                 .map(day => {
@@ -198,7 +171,10 @@ export const improvementDataSelector = createSelector(
 )
 
 export const improveItemIdsByDaySelector = createSelector(
-    () => _(LOCAL_ARSENAL_WEEKDAY)
+    [
+        localNedbDataSelector,
+    ],
+    ({ arsenalWeekday }) => _(arsenalWeekday)
         .mapValues(day =>
             _(day.improvements)
                 .map(([id]) => id)

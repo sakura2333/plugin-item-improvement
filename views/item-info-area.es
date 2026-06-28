@@ -13,6 +13,7 @@ import {
   improvementDataSelector,
   improveItemIdsByDaySelector, starCraftPlanSelector,
 } from './selectors'
+import { getNedbDataVersion, startNedbDataSync, subscribeNedbDataChange } from './nedb-data'
 
 const { __ } = window.i18n['poi-plugin-item-improvement2']
 
@@ -30,12 +31,15 @@ export const ItemInfoArea = connect(state => ({
   data: improvementDataSelector(state),
   idByDay: improveItemIdsByDaySelector(state),
   $equips: _.get(state, 'const.$ships', {}),
+  dbVersion: getNedbDataVersion(),
 }))(class itemInfoArea extends Component {
   static propTypes = {
     plans: PropTypes.object.isRequired,
     $equips: PropTypes.object.isRequired,
     idByDay: PropTypes.objectOf(PropTypes.array).isRequired,
     data: PropTypes.objectOf(PropTypes.object).isRequired,
+    dispatch: PropTypes.func.isRequired,
+    dbVersion: PropTypes.number.isRequired,
   }
 
   state = {
@@ -43,7 +47,22 @@ export const ItemInfoArea = connect(state => ({
   }
 
   componentDidMount() {
+    const { dbVersion, dispatch } = this.props
+
     migrateStarcraftPlans()
+    this.unsubscribeNedbDataChange = subscribeNedbDataChange(() => {
+      dispatch({ type: 'poi-plugin-item-improvement2/NEDB_DATA_CHANGED' })
+    })
+    startNedbDataSync()
+    if (dbVersion !== getNedbDataVersion()) {
+      dispatch({ type: 'poi-plugin-item-improvement2/NEDB_DATA_CHANGED' })
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.unsubscribeNedbDataChange) {
+      this.unsubscribeNedbDataChange()
+    }
   }
 
   handleKeyChange = key => {
