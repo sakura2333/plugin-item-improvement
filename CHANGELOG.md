@@ -1,13 +1,24 @@
-# Changelog
-
-All notable changes to `poi-plugin-item-improvement2` are documented here.
-
 ## [Unreleased]
 
 ### Planned
 
-- Add consumer views for equipment acquisition sources and special ship bonuses from `@sakura2333/kancolle-data`.
-- Remove the remaining local compatibility icon after the minimum supported shared data package advances to a version that always contains it.
+- Add consumer views for equipment acquisition sources and special ship bonuses when their compatibility contracts are frozen.
+
+## [1.1.1] - 2026-08-10
+
+### Changed
+
+- Removed `@sakura2333/kancolle-data` from the plugin's runtime npm dependencies.
+- Added a bundled, validated `improvement2` snapshot so first launch and offline launch always have compatible local data.
+- Added an independent background updater that resolves the npm `improvement2` dist-tag, downloads the exact tarball, verifies registry integrity, extracts only the improvement dataset and use-item icons, validates exact schema/content contracts, and atomically switches the active cache.
+- Data update checks are rate-limited to once per hour and do not block plugin startup. A validated update is hot-reloaded into the open improvement window through a lightweight Redux refresh event.
+- Updated CI to test the self-contained bundled-data/updater model instead of reinstalling an external data dependency.
+
+### Safety
+
+- Incompatible, incomplete, corrupted, oversized, timed-out, or unreachable updates leave the current dataset untouched.
+- Cache activation uses a validated version directory plus an atomic pointer file; a missing or corrupt active cache falls back to the bundled snapshot.
+- The updater keeps the newly active cache and the previously used version while pruning older cached versions.
 
 ## [1.0.27] - 2026-06-28
 

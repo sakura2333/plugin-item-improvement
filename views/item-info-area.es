@@ -11,6 +11,7 @@ import {
   CHANGELOG, CHANGELOG_CONFIG_KEY, CURRENT_VERSION, getChangelogEntriesSince,
 } from './changelog'
 import { StarcraftArea } from './starcraft/starcraft-area'
+import { DATA_UPDATED_EVENT } from './data-updater'
 import { migrateStarcraftPlans } from './starcraft/utils'
 import {
   improvementDataSelector,
@@ -49,6 +50,7 @@ export const ItemInfoArea = connect(state => ({
 
   componentDidMount() {
     migrateStarcraftPlans()
+    window.addEventListener(DATA_UPDATED_EVENT, this.handleDataUpdated)
     const lastSeenVersion = config.get(CHANGELOG_CONFIG_KEY, null)
     const changelogEntries = getChangelogEntriesSince(lastSeenVersion)
     if (changelogEntries.length > 0) {
@@ -57,6 +59,15 @@ export const ItemInfoArea = connect(state => ({
         showChangelog: true,
       })
     }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener(DATA_UPDATED_EVENT, this.handleDataUpdated)
+  }
+
+  handleDataUpdated = () => {
+    const { dispatch } = this.props
+    dispatch({ type: 'poi-plugin-item-improvement2/DATA_UPDATED' })
   }
 
   handleCloseChangelog = () => {

@@ -6,21 +6,21 @@ Poi plugin for viewing KanColle equipment improvement schedules, complete recipe
 
 Install the plugin through Poi, or place the package in Poi's plugin directory.
 
-Improvement data and use-item assets are supplied by the local npm dependency `@sakura2333/kancolle-data`; the plugin does not download GitHub data at runtime.
+The plugin ships with a validated improvement-data snapshot for immediate offline startup. After startup it checks the `@sakura2333/kancolle-data` `improvement2` channel in the npm registry at most once per hour, downloads an exact package tarball when the channel changes, verifies package integrity plus the supported data schemas/content, and atomically activates the new cached snapshot. Failed or incompatible updates never replace the currently usable data.
 
 ## Development
 
 ```bash
-npm ci --include=dev
+npm install --include=dev
 npm test
 npm pack --dry-run
 ```
 
-The committed lockfile keeps the legacy Poi transpilation toolchain reproducible. CI tests both the locked minimum-compatible data package and the latest compatible data package.
+The runtime plugin no longer installs `@sakura2333/kancolle-data` as an npm dependency. Development tests validate the bundled compatibility snapshot and the updater/cache contract.
 
 ## Publishing
 
-Publish a compatible `@sakura2333/kancolle-data` release before publishing a plugin version that depends on it.
+Publish compatible data to the `@sakura2333/kancolle-data` `improvement2` dist-tag. Plugin releases and data releases are independent after 1.1.1.
 
 Official package:
 

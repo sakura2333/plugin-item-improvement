@@ -2,6 +2,7 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
+const zlib = require('zlib')
 const {
   buildAssistantTextByDay,
   buildImprovementItem,
@@ -23,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -94,6 +95,18 @@ const packedFiles = new Set(dryRun[0].files.map(file => file.path))
 assert.ok(
   packedFiles.has('assets/icon/71.png'),
   'npm package is missing assets/icon/71.png'
+)
+assert.ok(
+  packedFiles.has('data/kancolle-data/manifest.json'),
+  'npm package is missing bundled data manifest'
+)
+assert.ok(
+  packedFiles.has('data/kancolle-data/improvement/list.json'),
+  'npm package is missing bundled improvement list'
+)
+assert.ok(
+  packedFiles.has('data/kancolle-data/improvement/detail.nedb'),
+  'npm package is missing bundled improvement detail'
 )
 
 for (const developmentOnlyPath of [
@@ -229,13 +242,22 @@ assert.deepStrictEqual(listProjection.itemIdsByDay[0], [19])
 assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳翔改二')
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
-const kancolleData = require('@sakura2333/kancolle-data')
+const pluginPackage = require('../package.json')
+assert.strictEqual(pluginPackage.version, '1.1.1')
+assert.strictEqual(
+  Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
+  false,
+  'runtime data package must not remain an npm dependency'
+)
 
 const {
   DATA_PACKAGE_NAME,
+  DATA_PACKAGE_TAG,
   SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION,
   SUPPORTED_IMPROVEMENT_SCHEMA_VERSION,
+  getBundledDataRoot,
   getDataPackageManifest,
+  getDataPackageVersion,
   getImprovementDataPaths,
   getUseitemIconPath,
   validateSchemaVersion,
@@ -243,9 +265,11 @@ const {
 
 const packageManifest = getDataPackageManifest()
 assert.strictEqual(DATA_PACKAGE_NAME, '@sakura2333/kancolle-data')
+assert.strictEqual(DATA_PACKAGE_TAG, 'improvement2')
 assert.strictEqual(packageManifest.datasets.improvement.schemaVersion, 3)
 assert.strictEqual(SUPPORTED_IMPROVEMENT_SCHEMA_VERSION, 3)
 assert.strictEqual(SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION, 2)
+assert.strictEqual(getDataPackageVersion(), packageManifest.packageVersion)
 assert.doesNotThrow(() => validateSchemaVersion(3, 3, 'fixture'))
 for (const invalid of [undefined, null, NaN, 0, 1, 2, 4, 'abc']) {
   assert.throws(
@@ -253,25 +277,131 @@ for (const invalid of [undefined, null, NaN, 0, 1, 2, 4, 'abc']) {
     /Unsupported fixture schema/
   )
 }
-assert.ok(fs.existsSync(getImprovementDataPaths().listPath))
-assert.ok(fs.existsSync(getImprovementDataPaths().detailPath))
+const dataPaths = getImprovementDataPaths()
+assert.ok(dataPaths.listPath.startsWith(getBundledDataRoot()))
+assert.ok(dataPaths.detailPath.startsWith(getBundledDataRoot()))
+assert.ok(fs.existsSync(dataPaths.listPath))
+assert.ok(fs.existsSync(dataPaths.detailPath))
 assert.ok(fs.existsSync(getUseitemIconPath(57)))
-const listAsset = JSON.parse(fs.readFileSync(kancolleData.improvement.listPath, 'utf8'))
+const listAsset = JSON.parse(fs.readFileSync(dataPaths.listPath, 'utf8'))
 const detailIds = new Set(
-  fs.readFileSync(kancolleData.improvement.detailPath, 'utf8')
+  fs.readFileSync(dataPaths.detailPath, 'utf8')
     .split('\n')
     .filter(Boolean)
     .map(line => JSON.parse(line).id)
 )
 assert.strictEqual(listAsset.metadata.schemaVersion, 2)
 assert.deepStrictEqual(listAsset.metadata.rowSchema, ['itemId', 'assistantTexts'])
-assert.ok(fs.existsSync(kancolleData.manifestPath))
-assert.ok(fs.existsSync(kancolleData.assets.useitemPath(57)))
+assert.ok(fs.existsSync(require('path').join(getBundledDataRoot(), 'manifest.json')))
 assert.strictEqual(listAsset.data.length, 8)
 listAsset.data.forEach(rows => rows.forEach(([itemId]) => assert.ok(detailIds.has(itemId))))
 
+const { validateDataRoot } = require('../views/data-package-validator.js')
+assert.doesNotThrow(() => validateDataRoot(getBundledDataRoot()))
 
-const detailRows = fs.readFileSync(kancolleData.improvement.detailPath, 'utf8')
+function copyTree(source, destination) {
+  fs.mkdirSync(destination, { recursive: true })
+  fs.readdirSync(source).forEach(name => {
+    const sourcePath = path.join(source, name)
+    const destinationPath = path.join(destination, name)
+    if (fs.statSync(sourcePath).isDirectory()) copyTree(sourcePath, destinationPath)
+    else fs.copyFileSync(sourcePath, destinationPath)
+  })
+}
+
+const cacheHome = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-cache-'))
+try {
+  const cacheRoot = path.join(
+    cacheHome,
+    'plugin-data',
+    'poi-plugin-item-improvement2',
+    'kancolle-data'
+  )
+  const cachedVersionRoot = path.join(
+    cacheRoot,
+    'versions',
+    packageManifest.packageVersion
+  )
+  copyTree(getBundledDataRoot(), cachedVersionRoot)
+  fs.writeFileSync(
+    path.join(cacheRoot, 'active.json'),
+    JSON.stringify({ version: packageManifest.packageVersion })
+  )
+
+  const probe = `
+    const dataPackage = require(${JSON.stringify(path.join(projectRoot, 'views', 'data-package.js'))});
+    process.stdout.write(dataPackage.getImprovementDataPaths().listPath);
+  `
+  const cachedListPath = execFileSync(process.execPath, ['-e', probe], {
+    encoding: 'utf8',
+    env: { ...process.env, POI_ITEM_IMPROVEMENT_DATA_HOME: cacheHome },
+  })
+  assert.ok(cachedListPath.startsWith(cachedVersionRoot))
+
+  const cachedManifestPath = path.join(cachedVersionRoot, 'manifest.json')
+  const incompatibleManifest = JSON.parse(fs.readFileSync(cachedManifestPath, 'utf8'))
+  incompatibleManifest.datasets.improvement.schemaVersion = 999
+  fs.writeFileSync(cachedManifestPath, JSON.stringify(incompatibleManifest))
+  const fallbackListPath = execFileSync(process.execPath, ['-e', probe], {
+    encoding: 'utf8',
+    env: { ...process.env, POI_ITEM_IMPROVEMENT_DATA_HOME: cacheHome },
+  })
+  assert.ok(fallbackListPath.startsWith(getBundledDataRoot()))
+} finally {
+  fs.rmSync(cacheHome, { recursive: true, force: true })
+}
+
+const { extractRequiredFilesFromTarGz } = require('../views/data-updater.js')
+
+function tarOctal(value, width) {
+  return `${value.toString(8).padStart(width - 1, '0')}\0`
+}
+
+function buildTarEntry(name, content) {
+  const header = Buffer.alloc(512)
+  header.write(name, 0, 100, 'utf8')
+  header.write(tarOctal(0o644, 8), 100, 8, 'ascii')
+  header.write(tarOctal(0, 8), 108, 8, 'ascii')
+  header.write(tarOctal(0, 8), 116, 8, 'ascii')
+  header.write(tarOctal(content.length, 12), 124, 12, 'ascii')
+  header.write(tarOctal(Math.floor(Date.now() / 1000), 12), 136, 12, 'ascii')
+  header.fill(0x20, 148, 156)
+  header[156] = '0'.charCodeAt(0)
+  header.write('ustar', 257, 5, 'ascii')
+  let checksum = 0
+  for (let index = 0; index < header.length; index += 1) checksum += header[index]
+  header.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148, 8, 'ascii')
+  const padding = Buffer.alloc((512 - (content.length % 512)) % 512)
+  return Buffer.concat([header, content, padding])
+}
+
+const tarEntries = [
+  'manifest.json',
+  'improvement/list.json',
+  'improvement/detail.nedb',
+].concat(
+  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitems'))
+    .map(name => `assets/useitems/${name}`)
+)
+const tarBuffer = Buffer.concat(
+  tarEntries.map(relativePath => buildTarEntry(
+    `package/${relativePath}`,
+    fs.readFileSync(path.join(getBundledDataRoot(), relativePath))
+  )).concat([Buffer.alloc(1024)])
+)
+const extractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-extract-'))
+try {
+  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), extractionRoot)
+  assert.ok(extracted.has('manifest.json'))
+  assert.ok(extracted.has('improvement/list.json'))
+  assert.ok(extracted.has('improvement/detail.nedb'))
+  assert.doesNotThrow(() => validateDataRoot(extractionRoot))
+} finally {
+  fs.rmSync(extractionRoot, { recursive: true, force: true })
+}
+
+
+const detailRows = fs.readFileSync(dataPaths.detailPath, 'utf8')
   .split('\n')
   .filter(Boolean)
   .map(line => JSON.parse(line))

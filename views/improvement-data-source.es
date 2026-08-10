@@ -1,6 +1,8 @@
 import fs from 'fs'
 import _ from 'lodash'
 import { getImprovementDataPaths } from './data-package'
+import { DATA_UPDATED_EVENT, scheduleDataUpdate } from './data-updater'
+import { validateImprovementListData } from './data-package-validator'
 
 function loadNedbAsMap(nedbPath, key = 'id') {
   if (!fs.existsSync(nedbPath)) {
@@ -15,41 +17,12 @@ function loadNedbAsMap(nedbPath, key = 'id') {
     .value()
 }
 
-function validateListData(data) {
-  if (!data || !data.metadata || !Array.isArray(data.data) || data.data.length !== 8) {
-    throw new Error('Invalid improvement list data')
-  }
-  if (Number(data.metadata.schemaVersion) !== 2
-    || !Array.isArray(data.metadata.rowSchema)
-    || data.metadata.rowSchema.length !== 2
-    || data.metadata.rowSchema[0] !== 'itemId'
-    || data.metadata.rowSchema[1] !== 'assistantTexts') {
-    throw new Error('Unsupported improvement list schema')
-  }
-
-  data.data.forEach((rows, viewIndex) => {
-    if (!Array.isArray(rows)) {
-      throw new Error(`Invalid improvement list view: ${viewIndex}`)
-    }
-    rows.forEach(row => {
-      if (!Array.isArray(row)
-        || row.length !== 2
-        || !Number.isInteger(Number(row[0]))
-        || !Array.isArray(row[1])) {
-        throw new Error(`Invalid improvement list row: ${JSON.stringify(row)}`)
-      }
-    })
-  })
-
-  return data
-}
-
 function loadListData(jsonPath) {
   if (!fs.existsSync(jsonPath)) {
     throw new Error(`Improvement list file not found: ${jsonPath}`)
   }
 
-  return validateListData(JSON.parse(fs.readFileSync(jsonPath, 'utf8')))
+  return validateImprovementListData(JSON.parse(fs.readFileSync(jsonPath, 'utf8')))
 }
 
 function loadImprovementData() {
@@ -60,7 +33,15 @@ function loadImprovementData() {
   }
 }
 
-const localImprovementData = loadImprovementData()
+let localImprovementData = loadImprovementData()
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener(DATA_UPDATED_EVENT, () => {
+    localImprovementData = loadImprovementData()
+  })
+}
+
+scheduleDataUpdate()
 
 export function getLocalImprovementData() {
   return localImprovementData

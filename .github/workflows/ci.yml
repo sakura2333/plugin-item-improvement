@@ -19,12 +19,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '20'
-          cache: npm
 
-      - name: Install locked dependencies
-        run: npm ci --include=dev --no-audit --no-fund
+      - name: Install development dependencies
+        run: npm install --include=dev --no-audit --no-fund
 
-      - name: Test minimum locked data package
+      - name: Test bundled data and self-updater contracts
         run: npm test
 
       - name: Verify official package
@@ -32,8 +31,3 @@ jobs:
 
       - name: Verify beta package and workspace restoration
         run: npm run publish:beta:dry-run
-
-      - name: Test latest compatible data package
-        run: |
-          npm install --no-save --package-lock=false --no-audit --no-fund '@sakura2333/kancolle-data@>=0.1.0 <0.3.0'
-          npm test

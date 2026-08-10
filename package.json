@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "View KanColle equipment improvement schedules, routes, costs, and required materials in Poi",
   "main": "index.js",
   "scripts": {
@@ -33,8 +33,7 @@
   "homepage": "https://github.com/sakura2333/plugin-item-improvement#readme",
   "dependencies": {
     "dom-to-image": "^2.6.0",
-    "react-numeric-input": "^2.2.3",
-    "@sakura2333/kancolle-data": "improvement2"
+    "react-numeric-input": "^2.2.3"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",
@@ -62,6 +61,7 @@
     "index.js",
     "views/**/*.js",
     "assets/**/*",
+    "data/**/*",
     "i18n/*.json",
     "README.md"
   ]

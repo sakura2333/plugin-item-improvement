@@ -1,97 +1,130 @@
 import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import {
+  SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION,
+  SUPPORTED_IMPROVEMENT_SCHEMA_VERSION,
+  validateDataRoot,
+  validateSchemaVersion,
+} from './data-package-validator'
 
 const PACKAGE_NAME = '@sakura2333/kancolle-data'
-const IMPROVEMENT_SCHEMA_VERSION = 3
-const IMPROVEMENT_LIST_SCHEMA_VERSION = 2
+const PACKAGE_TAG = 'improvement2'
+const BUNDLED_ROOT = path.resolve(__dirname, '../data/kancolle-data')
 
-let dataPackage = null
-let manifest = null
+let resolvedPackage = null
 
-function loadDataPackage() {
-  if (dataPackage) return dataPackage
+function ensureDir(directory) {
+  if (fs.existsSync(directory)) return
+  const parent = path.dirname(directory)
+  if (parent !== directory) ensureDir(parent)
+  try {
+    fs.mkdirSync(directory)
+  } catch (error) {
+    if (!fs.existsSync(directory)) throw error
+  }
+}
+
+function getPoiUserDataPath() {
+  if (process.env.POI_ITEM_IMPROVEMENT_DATA_HOME) {
+    return process.env.POI_ITEM_IMPROVEMENT_DATA_HOME
+  }
 
   try {
-    // Keep this as CommonJS so the published data package can expose stable paths
-    // without being bundled into the plugin JavaScript output.
-    dataPackage = require(PACKAGE_NAME)
-  }
-  catch (error) {
-    throw new Error(
-      `Missing required data package ${PACKAGE_NAME}: ${error.message}`
-    )
+    // eslint-disable-next-line global-require
+    const electron = require('electron')
+    const app = electron.remote && electron.remote.app
+      ? electron.remote.app
+      : electron.app
+    if (app && typeof app.getPath === 'function') {
+      return app.getPath('userData')
+    }
+  } catch (error) {
+    // Node-based tests and non-Electron tooling use the fallback below.
   }
 
-  return dataPackage
+  return path.join(os.homedir(), '.poi')
 }
 
-function requireExactSchema(value, expected, label) {
-  const schemaVersion = Number(value)
-  if (!Number.isInteger(schemaVersion) || schemaVersion !== expected) {
-    throw new Error(
-      `Unsupported ${label} schema ${value}; supported version is ${expected}`
-    )
-  }
-}
-
-function readManifest() {
-  if (manifest) return manifest
-
-  const pkg = loadDataPackage()
-  if (!pkg.manifestPath || !fs.existsSync(pkg.manifestPath)) {
-    throw new Error(`${PACKAGE_NAME} manifest not found`)
-  }
-
-  manifest = JSON.parse(fs.readFileSync(pkg.manifestPath, 'utf8'))
-  const improvement = manifest.datasets && manifest.datasets.improvement
-  if (!improvement) {
-    throw new Error(`${PACKAGE_NAME} does not contain the improvement dataset`)
-  }
-
-  requireExactSchema(
-    improvement.schemaVersion,
-    IMPROVEMENT_SCHEMA_VERSION,
-    'improvement detail'
+export function getDataCacheRoot() {
+  const root = path.join(
+    getPoiUserDataPath(),
+    'plugin-data',
+    'poi-plugin-item-improvement2',
+    'kancolle-data'
   )
-
-  if (improvement.listSchemaVersion != null) {
-    requireExactSchema(
-      improvement.listSchemaVersion,
-      IMPROVEMENT_LIST_SCHEMA_VERSION,
-      'improvement list'
-    )
-  }
-
-  return manifest
+  ensureDir(root)
+  return root
 }
 
-export const getDataPackageManifest = () => readManifest()
+export function getBundledDataRoot() {
+  return BUNDLED_ROOT
+}
+
+export function getActivePointerPath() {
+  return path.join(getDataCacheRoot(), 'active.json')
+}
+
+export function getCachedVersionRoot(version) {
+  const normalizedVersion = String(version || '')
+  if (!normalizedVersion || !/^[A-Za-z0-9._-]+$/.test(normalizedVersion)) {
+    throw new Error(`Unsafe data package version: ${version}`)
+  }
+  return path.join(getDataCacheRoot(), 'versions', normalizedVersion)
+}
+
+function readActiveVersion() {
+  const pointerPath = getActivePointerPath()
+  if (!fs.existsSync(pointerPath)) return null
+  try {
+    const pointer = JSON.parse(fs.readFileSync(pointerPath, 'utf8'))
+    return pointer && pointer.version ? String(pointer.version) : null
+  } catch (error) {
+    return null
+  }
+}
+
+function resolveDataPackage() {
+  if (resolvedPackage) return resolvedPackage
+
+  const activeVersion = readActiveVersion()
+  if (activeVersion) {
+    try {
+      resolvedPackage = validateDataRoot(getCachedVersionRoot(activeVersion))
+      return resolvedPackage
+    } catch (error) {
+      // A partial/corrupt cache must never prevent the bundled snapshot from loading.
+    }
+  }
+
+  resolvedPackage = validateDataRoot(BUNDLED_ROOT)
+  return resolvedPackage
+}
+
+
+export function resetDataPackageResolution() {
+  resolvedPackage = null
+}
+
+export const getDataPackageManifest = () => resolveDataPackage().manifest
+
+export const getDataPackageVersion = () => resolveDataPackage().version
 
 export const getImprovementDataPaths = () => {
-  readManifest()
-  const pkg = loadDataPackage()
-
-  if (!pkg.improvement || !pkg.improvement.listPath || !pkg.improvement.detailPath) {
-    throw new Error(`${PACKAGE_NAME} improvement paths are incomplete`)
-  }
-  if (!fs.existsSync(pkg.improvement.listPath) || !fs.existsSync(pkg.improvement.detailPath)) {
-    throw new Error(`${PACKAGE_NAME} improvement files are missing`)
-  }
-
+  const pkg = resolveDataPackage()
   return {
-    listPath: pkg.improvement.listPath,
-    detailPath: pkg.improvement.detailPath,
+    listPath: pkg.listPath,
+    detailPath: pkg.detailPath,
   }
 }
 
 export const getUseitemIconPath = id => {
-  const pkg = loadDataPackage()
-  return pkg.assets && typeof pkg.assets.useitemPath === 'function'
-    ? pkg.assets.useitemPath(id)
-    : null
+  const iconPath = resolveDataPackage().useitemPath(id)
+  return fs.existsSync(iconPath) ? iconPath : null
 }
 
 export const DATA_PACKAGE_NAME = PACKAGE_NAME
-export const SUPPORTED_IMPROVEMENT_SCHEMA_VERSION = IMPROVEMENT_SCHEMA_VERSION
-export const SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION = IMPROVEMENT_LIST_SCHEMA_VERSION
-
-export const validateSchemaVersion = requireExactSchema
+export const DATA_PACKAGE_TAG = PACKAGE_TAG
+export { SUPPORTED_IMPROVEMENT_SCHEMA_VERSION }
+export { SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION }
+export { validateSchemaVersion }
