@@ -24,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.3', '1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.4', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.3', '1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.4', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -241,7 +241,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.3')
+assert.strictEqual(pluginPackage.version, '1.1.4')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -297,45 +297,42 @@ listAsset.data.forEach(rows => rows.forEach(([itemId]) => assert.ok(detailIds.ha
 const { validateDataRoot } = require('../views/data-package-validator.js')
 assert.doesNotThrow(() => validateDataRoot(getBundledDataRoot()))
 
-
-const legacyPngFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-png-'))
-try {
-  copyTree(getBundledDataRoot(), legacyPngFixtureRoot)
-  const legacyManifestPath = path.join(legacyPngFixtureRoot, 'manifest.json')
-  const legacyManifest = JSON.parse(fs.readFileSync(legacyManifestPath, 'utf8'))
-  Object.keys(legacyManifest.files || {}).forEach(relativePath => {
-    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
-    const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
-    const webpPath = path.join(legacyPngFixtureRoot, relativePath)
-    const pngPath = path.join(legacyPngFixtureRoot, pngRelativePath)
-    fs.renameSync(webpPath, pngPath)
-    legacyManifest.files[pngRelativePath] = legacyManifest.files[relativePath]
-    delete legacyManifest.files[relativePath]
-  })
-  fs.writeFileSync(legacyManifestPath, JSON.stringify(legacyManifest))
-  const validatedLegacyPng = validateDataRoot(legacyPngFixtureRoot)
-  assert.ok(validatedLegacyPng.useitemPath(2).endsWith(`${path.sep}2.png`))
-  assert.ok(fs.existsSync(validatedLegacyPng.useitemPath(2)))
-} finally {
-  fs.rmSync(legacyPngFixtureRoot, { recursive: true, force: true })
+for (const runtimeFile of [
+  'views/data-package-validator.es',
+  'views/data-updater.es',
+  'views/useitem-icon.es',
+]) {
+  const runtimeSource = fs.readFileSync(path.join(projectRoot, runtimeFile), 'utf8')
+  assert.strictEqual(
+    /\.png/i.test(runtimeSource),
+    false,
+    `${runtimeFile} must not contain PNG runtime paths`
+  )
 }
 
-const stalePngManifestFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-stale-png-manifest-'))
+
+
+const pngOnlyFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-png-only-'))
 try {
-  copyTree(getBundledDataRoot(), stalePngManifestFixtureRoot)
-  const staleManifestPath = path.join(stalePngManifestFixtureRoot, 'manifest.json')
-  const staleManifest = JSON.parse(fs.readFileSync(staleManifestPath, 'utf8'))
-  Object.keys(staleManifest.files || {}).forEach(relativePath => {
+  copyTree(getBundledDataRoot(), pngOnlyFixtureRoot)
+  const pngManifestPath = path.join(pngOnlyFixtureRoot, 'manifest.json')
+  const pngManifest = JSON.parse(fs.readFileSync(pngManifestPath, 'utf8'))
+  Object.keys(pngManifest.files || {}).forEach(relativePath => {
     if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
     const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
-    staleManifest.files[pngRelativePath] = staleManifest.files[relativePath]
-    delete staleManifest.files[relativePath]
+    const webpPath = path.join(pngOnlyFixtureRoot, relativePath)
+    const pngPath = path.join(pngOnlyFixtureRoot, pngRelativePath)
+    fs.renameSync(webpPath, pngPath)
+    pngManifest.files[pngRelativePath] = pngManifest.files[relativePath]
+    delete pngManifest.files[relativePath]
   })
-  fs.writeFileSync(staleManifestPath, JSON.stringify(staleManifest))
-  const validatedStaleManifest = validateDataRoot(stalePngManifestFixtureRoot)
-  assert.ok(validatedStaleManifest.useitemPath(2).endsWith(`${path.sep}2.webp`))
+  fs.writeFileSync(pngManifestPath, JSON.stringify(pngManifest))
+  assert.throws(
+    () => validateDataRoot(pngOnlyFixtureRoot),
+    /assets[\\/]useitems[\\/]2\.webp/
+  )
 } finally {
-  fs.rmSync(stalePngManifestFixtureRoot, { recursive: true, force: true })
+  fs.rmSync(pngOnlyFixtureRoot, { recursive: true, force: true })
 }
 
 function copyTree(source, destination) {

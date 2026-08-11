@@ -136,19 +136,7 @@ export function validateDataRoot(rootPath) {
 
   const iconDataset = manifest.datasets && manifest.datasets.useitemIcons
   const iconDirectory = (iconDataset && iconDataset.directory) || 'assets/useitems'
-  const manifestFiles = manifest.files || {}
-  const resolveUseitemRelativePath = id => {
-    const candidates = [
-      `${iconDirectory}/${id}.webp`,
-      `${iconDirectory}/${id}.png`,
-    ]
-    const existing = candidates.find(candidate => fs.existsSync(path.join(rootPath, candidate)))
-    if (existing) return existing
-    const manifested = candidates.find(candidate => (
-      Object.prototype.hasOwnProperty.call(manifestFiles, candidate)
-    ))
-    return manifested || candidates[0]
-  }
+  const resolveUseitemRelativePath = id => `${iconDirectory}/${id}.webp`
   const requiredIconIds = (iconDataset && iconDataset.requiredIds) || []
   requiredIconIds.forEach(id => {
     validateManifestFile(rootPath, manifest, resolveUseitemRelativePath(id))

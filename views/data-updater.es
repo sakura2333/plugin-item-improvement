@@ -160,7 +160,7 @@ function parseTarOctal(buffer, start, length) {
 
 function isAllowedArchivePath(relativePath) {
   return REQUIRED_ARCHIVE_PATHS.indexOf(relativePath) >= 0
-    || (relativePath.indexOf(OPTIONAL_ARCHIVE_PREFIX) === 0 && /\.(?:png|webp)$/i.test(relativePath))
+    || (relativePath.indexOf(OPTIONAL_ARCHIVE_PREFIX) === 0 && /\.webp$/i.test(relativePath))
 }
 
 export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {

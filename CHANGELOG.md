@@ -4,37 +4,11 @@
 
 - Add consumer views for equipment acquisition sources and special ship bonuses when their compatibility contracts are frozen.
 
-## [1.1.3] - 2026-08-11
-
-### Fixed
-
-- Switched the bundled use-item snapshot and local compatibility icon from PNG to WebP so the plugin fallback path matches the current data producer.
-- Use-item validation now prefers the file that actually exists on disk (WebP first, PNG fallback) instead of preferring a stale manifest PNG entry over an extracted WebP file.
-- Kept PNG readable only as a legacy cache fallback.
-
-## [1.1.2] - 2026-08-11
-
-### Fixed
-
-- Updated the independent data updater to accept both WebP and legacy PNG use-item assets.
-- Resolved use-item icon paths from the downloaded manifest instead of assuming a `.png` extension, so current `improvement2` releases can pass validation and activate normally.
-- A previous data-update error now triggers an immediate retry on the next plugin/Poi startup instead of waiting for the normal one-hour interval.
-
-## [1.1.1] - 2026-08-10
+## [1.1.4] - 2026-08-11
 
 ### Changed
 
-- Removed `@sakura2333/kancolle-data` from the plugin's runtime npm dependencies.
-- Added a bundled, validated `improvement2` snapshot so first launch and offline launch always have compatible local data.
-- Added an independent background updater that resolves the npm `improvement2` dist-tag, downloads the exact tarball, verifies registry integrity, extracts only the improvement dataset and use-item icons, validates exact schema/content contracts, and atomically switches the active cache.
-- Data update checks are rate-limited to once per hour and do not block plugin startup. A validated update is hot-reloaded into the open improvement window through a lightweight Redux refresh event.
-- Updated CI to test the self-contained bundled-data/updater model instead of reinstalling an external data dependency.
-
-### Safety
-
-- Incompatible, incomplete, corrupted, oversized, timed-out, or unreachable updates leave the current dataset untouched.
-- Cache activation uses a validated version directory plus an atomic pointer file; a missing or corrupt active cache falls back to the bundled snapshot.
-- The updater keeps the newly active cache and the previously used version while pruning older cached versions.
+- Improvement data now updates automatically in the background, so data-only updates can be delivered independently of plugin releases.
 
 ## [1.0.27] - 2026-06-28
 
