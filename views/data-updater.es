@@ -244,21 +244,21 @@ export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
   const useitemDirectory = getArchiveUseitemDirectory(entries, tarBuffer)
   const useitemPrefix = `${useitemDirectory}/`
   const declaredUseitemEntries = entries.filter(entry => (
-    entry.relativePath.indexOf(useitemPrefix) === 0 && /\.webp$/i.test(entry.relativePath)
+    entry.relativePath.indexOf(useitemPrefix) === 0 && /\.png$/i.test(entry.relativePath)
   ))
   if (declaredUseitemEntries.length === 0) {
     const archiveUseitemDirectories = Array.from(new Set(entries
-      .filter(entry => /^assets\/useitems?\/[^/]+\.webp$/i.test(entry.relativePath))
+      .filter(entry => /^assets\/useitems?\/[^/]+\.png$/i.test(entry.relativePath))
       .map(entry => path.posix.dirname(entry.relativePath))))
     throw new Error(
-      `Data package useitem icon contract mismatch: manifest declares ${useitemDirectory}; archive contains ${archiveUseitemDirectories.join(', ') || 'no useitem WebP directory'}`
+      `Data package useitem icon contract mismatch: manifest declares ${useitemDirectory}; archive contains ${archiveUseitemDirectories.join(', ') || 'no useitem PNG directory'}`
     )
   }
 
   entries.forEach(entry => {
     const required = REQUIRED_ARCHIVE_PATHS.indexOf(entry.relativePath) >= 0
     const useitem = entry.relativePath.indexOf(useitemPrefix) === 0
-      && /\.webp$/i.test(entry.relativePath)
+      && /\.png$/i.test(entry.relativePath)
     if (required || useitem) writeTarEntry(tarBuffer, destinationRoot, entry, extracted)
   })
 

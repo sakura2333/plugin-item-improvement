@@ -13,7 +13,8 @@ The runtime only consumes:
 
 - `improvement/list.json`: compact all + seven-day list projection.
 - `improvement/detail.nedb`: full equipment detail and recipe routes.
-- `assets/useitems/*.webp`: shared use-item icons, preserving the upstream package path.
+- `assets/useitems/*.png`: bundled `0.5.1-improvement2` use-item icons preserved exactly as the offline fallback snapshot.
+- Downloaded `improvement2` versions use the icon directory declared by that package's manifest and the PNG assets shipped in the real npm artifact.
 
 The updater checks the npm registry in the background, follows the `improvement2` dist-tag to an exact
 version, verifies package integrity, extracts only the allowlisted files, validates the supported schemas

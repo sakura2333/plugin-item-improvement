@@ -1,6 +1,6 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "View KanColle equipment improvement schedules, routes, costs, and required materials in Poi",
   "main": "index.js",
   "scripts": {

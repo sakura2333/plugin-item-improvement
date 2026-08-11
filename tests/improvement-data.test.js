@@ -23,11 +23,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.8', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.9', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.8', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.9', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -96,9 +96,9 @@ assert.ok(
   'npm package is missing data/fallback/useitem.svg'
 )
 assert.strictEqual(
-  packedFiles.has('assets/icon/71.webp'),
+  packedFiles.has('assets/icon/71.png'),
   false,
-  'npm package must not contain the removed local 71.webp fallback'
+  'npm package must not contain the removed local 71.png fallback'
 )
 assert.ok(
   packedFiles.has('data/kancolle-data/manifest.json'),
@@ -111,6 +111,15 @@ assert.ok(
 assert.ok(
   packedFiles.has('data/kancolle-data/improvement/detail.nedb'),
   'npm package is missing bundled improvement detail'
+)
+assert.ok(
+  packedFiles.has('data/kancolle-data/assets/useitems/57.png'),
+  'npm package is missing bundled improvement2 PNG assets'
+)
+assert.strictEqual(
+  Array.from(packedFiles).some(file => /\.webp$/i.test(file)),
+  false,
+  'npm package must not contain WebP assets for the improvement2 runtime contract'
 )
 
 for (const developmentOnlyPath of [
@@ -248,7 +257,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.8')
+assert.strictEqual(pluginPackage.version, '1.1.9')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -275,6 +284,7 @@ assert.strictEqual(packageManifest.datasets.improvement.schemaVersion, 3)
 assert.strictEqual(SUPPORTED_IMPROVEMENT_SCHEMA_VERSION, 3)
 assert.strictEqual(SUPPORTED_IMPROVEMENT_LIST_SCHEMA_VERSION, 2)
 assert.strictEqual(getDataPackageVersion(), packageManifest.packageVersion)
+assert.strictEqual(packageManifest.packageVersion, '0.5.1-improvement2')
 assert.doesNotThrow(() => validateSchemaVersion(3, 3, 'fixture'))
 for (const invalid of [undefined, null, NaN, 0, 1, 2, 4, 'abc']) {
   assert.throws(
@@ -293,9 +303,9 @@ assert.strictEqual(
   false,
   'bundled improvement2 data must preserve assets/useitems without remapping to assets/useitem'
 )
-assert.ok(fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitems', '57.webp')))
+assert.ok(fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitems', '57.png')))
 assert.ok(fs.existsSync(getUseitemIconPath(57)))
-assert.match(getUseitemIconPath(57), /assets[\\/]useitems[\\/]57\.webp$/)
+assert.match(getUseitemIconPath(57), /assets[\\/]useitems[\\/]57\.png$/)
 const listAsset = JSON.parse(fs.readFileSync(dataPaths.listPath, 'utf8'))
 const detailIds = new Set(
   fs.readFileSync(dataPaths.detailPath, 'utf8')
@@ -319,9 +329,9 @@ for (const runtimeFile of [
 ]) {
   const runtimeSource = fs.readFileSync(path.join(projectRoot, runtimeFile), 'utf8')
   assert.strictEqual(
-    /\.png/i.test(runtimeSource),
+    /\.webp/i.test(runtimeSource),
     false,
-    `${runtimeFile} must not contain PNG runtime paths`
+    `${runtimeFile} must not contain WebP runtime paths for the improvement2 contract`
   )
 }
 
@@ -333,34 +343,17 @@ for (const runtimeFile of [
   assert.strictEqual(
     runtimeSource.includes('assets/useitems'),
     true,
-    `${runtimeFile} must default to the improvement2 assets/useitems contract`
+    `${runtimeFile} must preserve the bundled improvement2 fallback directory`
   )
 }
 
-
-
-const pngOnlyFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-png-only-'))
-try {
-  copyTree(getBundledDataRoot(), pngOnlyFixtureRoot)
-  const pngManifestPath = path.join(pngOnlyFixtureRoot, 'manifest.json')
-  const pngManifest = JSON.parse(fs.readFileSync(pngManifestPath, 'utf8'))
-  Object.keys(pngManifest.files || {}).forEach(relativePath => {
-    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
-    const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
-    const webpPath = path.join(pngOnlyFixtureRoot, relativePath)
-    const pngPath = path.join(pngOnlyFixtureRoot, pngRelativePath)
-    fs.renameSync(webpPath, pngPath)
-    pngManifest.files[pngRelativePath] = pngManifest.files[relativePath]
-    delete pngManifest.files[relativePath]
-  })
-  fs.writeFileSync(pngManifestPath, JSON.stringify(pngManifest))
-  assert.throws(
-    () => validateDataRoot(pngOnlyFixtureRoot),
-    /assets[\\/]useitems[\\/]2\.webp/
-  )
-} finally {
-  fs.rmSync(pngOnlyFixtureRoot, { recursive: true, force: true })
-}
+const bundledAssetFiles = fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitems'))
+assert.ok(bundledAssetFiles.length > 0, 'bundled improvement2 snapshot has no useitem assets')
+assert.ok(
+  bundledAssetFiles.every(name => /\.png$/i.test(name)),
+  'bundled improvement2 snapshot must preserve its original PNG assets'
+)
+assert.strictEqual(bundledAssetFiles.some(name => /\.webp$/i.test(name)), false)
 
 function copyTree(source, destination) {
   fs.mkdirSync(destination, { recursive: true })

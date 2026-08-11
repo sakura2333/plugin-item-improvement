@@ -23,7 +23,7 @@ class StaticUseitemIcon extends Component {
   render() {
     const { useitemId, className, useSVGIcon } = this.props
     const classNames = classnames(
-      useSVGIcon ? 'svg' : 'webp',
+      useSVGIcon ? 'svg' : 'png',
       className
     )
     const packageIcon = getUseitemIconPath(useitemId)
