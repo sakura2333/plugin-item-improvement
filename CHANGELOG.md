@@ -4,7 +4,7 @@
 
 - Add consumer views for equipment acquisition sources and special ship bonuses when their compatibility contracts are frozen.
 
-## [1.1.7] - 2026-08-11
+## [1.1.8] - 2026-08-11
 
 ### Changed
 

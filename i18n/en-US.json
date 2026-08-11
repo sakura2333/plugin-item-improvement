@@ -60,5 +60,5 @@
   "changelog_1_0_21_separate_routes": "Improvement routes with different materials, costs, or upgrade targets are now shown in separate tables.",
   "changelog_1_0_21_tamanami_route": "Added Tamanami Kai Ni’s dedicated material route and kept it separate from the normal route.",
   "changelog_1_0_27_data_safety": "Improved data safety checks so incomplete or incompatible improvement information is rejected instead of being displayed incorrectly.",
-  "changelog_1_1_7_auto_data_update": "Improvement data now updates automatically in the background, so data updates no longer require a plugin release."
+  "changelog_1_1_8_auto_data_update": "Improvement data now updates automatically in the background, so data updates no longer require a plugin release."
 }

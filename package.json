@@ -1,11 +1,11 @@
 {
   "name": "poi-plugin-item-improvement2",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "View KanColle equipment improvement schedules, routes, costs, and required materials in Poi",
   "main": "index.js",
   "scripts": {
     "prepack": "poi-util-transpile",
-    "test": "npm run prepack && node tests/improvement-data.test.js",
+    "test": "npm run prepack && node tests/improvement-data.test.js && node tests/live-improvement2-update.test.js",
     "postpack": "npm run clean:js",
     "clean:js": "find ./views -name '*.js' -type f -delete && rm -f ./index.js",
     "posttest": "npm run clean:js",

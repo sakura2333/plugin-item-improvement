@@ -243,6 +243,17 @@ export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
   const extracted = new Set()
   const useitemDirectory = getArchiveUseitemDirectory(entries, tarBuffer)
   const useitemPrefix = `${useitemDirectory}/`
+  const declaredUseitemEntries = entries.filter(entry => (
+    entry.relativePath.indexOf(useitemPrefix) === 0 && /\.webp$/i.test(entry.relativePath)
+  ))
+  if (declaredUseitemEntries.length === 0) {
+    const archiveUseitemDirectories = Array.from(new Set(entries
+      .filter(entry => /^assets\/useitems?\/[^/]+\.webp$/i.test(entry.relativePath))
+      .map(entry => path.posix.dirname(entry.relativePath))))
+    throw new Error(
+      `Data package useitem icon contract mismatch: manifest declares ${useitemDirectory}; archive contains ${archiveUseitemDirectories.join(', ') || 'no useitem WebP directory'}`
+    )
+  }
 
   entries.forEach(entry => {
     const required = REQUIRED_ARCHIVE_PATHS.indexOf(entry.relativePath) >= 0
@@ -303,7 +314,7 @@ function registryMetadataUrl() {
   return `${REGISTRY_ORIGIN}/${packageName}/${encodeURIComponent(DATA_PACKAGE_TAG)}`
 }
 
-async function fetchRemotePackageMetadata() {
+export async function fetchRemotePackageMetadata() {
   const metadataBuffer = await requestBuffer(registryMetadataUrl(), MAX_METADATA_BYTES)
   const metadata = JSON.parse(metadataBuffer.toString('utf8'))
   if (!metadata.version || !metadata.dist || !metadata.dist.tarball) {
@@ -352,6 +363,18 @@ function installTarball(version, tarballBuffer) {
     removeTree(stagingRoot)
     throw error
   }
+}
+
+export async function downloadAndInstallRemoteDataPackage(metadata = null) {
+  const remoteMetadata = metadata || await fetchRemotePackageMetadata()
+  const version = String(remoteMetadata.version)
+  const tarball = await requestBuffer(remoteMetadata.dist.tarball, MAX_TARBALL_BYTES)
+  const legacyIntegrity = remoteMetadata.dist.shasum
+    ? `sha1-${Buffer.from(remoteMetadata.dist.shasum, 'hex').toString('base64')}`
+    : null
+  verifyIntegrity(tarball, remoteMetadata.dist.integrity || legacyIntegrity)
+  const validated = installTarball(version, tarball)
+  return { version, validated }
 }
 
 function activateVersion(version) {
@@ -405,12 +428,7 @@ export async function checkForDataUpdate(force = false) {
       return { status: 'current', version: currentVersion }
     }
 
-    const tarball = await requestBuffer(metadata.dist.tarball, MAX_TARBALL_BYTES)
-    const legacyIntegrity = metadata.dist.shasum
-      ? `sha1-${Buffer.from(metadata.dist.shasum, 'hex').toString('base64')}`
-      : null
-    verifyIntegrity(tarball, metadata.dist.integrity || legacyIntegrity)
-    installTarball(remoteVersion, tarball)
+    await downloadAndInstallRemoteDataPackage(metadata)
     activateVersion(remoteVersion)
     writeUpdateState({
       checkedAt: Date.now(),

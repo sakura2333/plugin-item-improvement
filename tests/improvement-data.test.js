@@ -2,7 +2,6 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
-const zlib = require('zlib')
 const {
   buildAssistantTextByDay,
   buildImprovementItem,
@@ -24,11 +23,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.7', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.8', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.7', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.8', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -119,6 +118,7 @@ for (const developmentOnlyPath of [
   'REFACTOR_NOTES.md',
   'scripts/publish-beta.js',
   'tests/improvement-data.test.js',
+  'tests/live-improvement2-update.test.js',
 ]) {
   assert.strictEqual(
     packedFiles.has(developmentOnlyPath),
@@ -248,7 +248,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.7')
+assert.strictEqual(pluginPackage.version, '1.1.8')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -414,104 +414,8 @@ try {
   fs.rmSync(cacheHome, { recursive: true, force: true })
 }
 
-const { extractRequiredFilesFromTarGz } = require('../views/data-updater.js')
-
-function tarOctal(value, width) {
-  return `${value.toString(8).padStart(width - 1, '0')}\0`
-}
-
-function buildTarEntry(name, content) {
-  const header = Buffer.alloc(512)
-  header.write(name, 0, 100, 'utf8')
-  header.write(tarOctal(0o644, 8), 100, 8, 'ascii')
-  header.write(tarOctal(0, 8), 108, 8, 'ascii')
-  header.write(tarOctal(0, 8), 116, 8, 'ascii')
-  header.write(tarOctal(content.length, 12), 124, 12, 'ascii')
-  header.write(tarOctal(Math.floor(Date.now() / 1000), 12), 136, 12, 'ascii')
-  header.fill(0x20, 148, 156)
-  header[156] = '0'.charCodeAt(0)
-  header.write('ustar', 257, 5, 'ascii')
-  let checksum = 0
-  for (let index = 0; index < header.length; index += 1) checksum += header[index]
-  header.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148, 8, 'ascii')
-  const padding = Buffer.alloc((512 - (content.length % 512)) % 512)
-  return Buffer.concat([header, content, padding])
-}
-
-const tarEntries = [
-  'manifest.json',
-  'improvement/list.json',
-  'improvement/detail.nedb',
-].concat(
-  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitems'))
-    .map(name => `assets/useitems/${name}`)
-)
-const tarBuffer = Buffer.concat(
-  tarEntries.map(relativePath => buildTarEntry(
-    `package/${relativePath}`,
-    fs.readFileSync(path.join(getBundledDataRoot(), relativePath))
-  )).concat([Buffer.alloc(1024)])
-)
-const extractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-extract-'))
-try {
-  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), extractionRoot)
-  assert.ok(extracted.has('manifest.json'))
-  assert.ok(extracted.has('improvement/list.json'))
-  assert.ok(extracted.has('improvement/detail.nedb'))
-  assert.doesNotThrow(() => validateDataRoot(extractionRoot))
-} finally {
-  fs.rmSync(extractionRoot, { recursive: true, force: true })
-}
-
-const webpExtractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-extract-'))
-try {
-  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), webpExtractionRoot)
-  assert.ok(extracted.has('assets/useitems/2.webp'))
-  assert.strictEqual(extracted.has('assets/useitems/2.png'), false)
-} finally {
-  fs.rmSync(webpExtractionRoot, { recursive: true, force: true })
-}
-
-const manifestDirectedRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-manifest-dir-'))
-try {
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(getBundledDataRoot(), 'manifest.json'), 'utf8')
-  )
-  const originalDirectory = manifest.datasets.useitemIcons.directory
-  const declaredDirectory = 'assets/useitem'
-  manifest.datasets.useitemIcons.directory = declaredDirectory
-  manifest.files = Object.keys(manifest.files).reduce((files, relativePath) => {
-    const mappedPath = relativePath.indexOf(`${originalDirectory}/`) === 0
-      ? `${declaredDirectory}/${relativePath.slice(originalDirectory.length + 1)}`
-      : relativePath
-    files[mappedPath] = manifest.files[relativePath]
-    return files
-  }, {})
-
-  const iconNames = fs.readdirSync(path.join(getBundledDataRoot(), originalDirectory))
-  const entries = [
-    buildTarEntry('package/manifest.json', Buffer.from(JSON.stringify(manifest))),
-    buildTarEntry(
-      'package/improvement/list.json',
-      fs.readFileSync(path.join(getBundledDataRoot(), 'improvement/list.json'))
-    ),
-    buildTarEntry(
-      'package/improvement/detail.nedb',
-      fs.readFileSync(path.join(getBundledDataRoot(), 'improvement/detail.nedb'))
-    ),
-  ].concat(iconNames.map(name => buildTarEntry(
-    `package/${declaredDirectory}/${name}`,
-    fs.readFileSync(path.join(getBundledDataRoot(), originalDirectory, name))
-  )))
-  const declaredTar = zlib.gzipSync(Buffer.concat(entries.concat([Buffer.alloc(1024)])))
-  const extracted = extractRequiredFilesFromTarGz(declaredTar, manifestDirectedRoot)
-
-  assert.ok(extracted.has(`${declaredDirectory}/2.webp`))
-  assert.strictEqual(extracted.has(`${originalDirectory}/2.webp`), false)
-  assert.doesNotThrow(() => validateDataRoot(manifestDirectedRoot))
-} finally {
-  fs.rmSync(manifestDirectedRoot, { recursive: true, force: true })
-}
+// Remote updater compatibility is covered only by tests/live-improvement2-update.test.js,
+// which exercises the real @sakura2333/kancolle-data@improvement2 package.
 
 
 const detailRows = fs.readFileSync(dataPaths.detailPath, 'utf8')
