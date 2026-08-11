@@ -142,12 +142,12 @@ export function validateDataRoot(rootPath) {
       `${iconDirectory}/${id}.webp`,
       `${iconDirectory}/${id}.png`,
     ]
+    const existing = candidates.find(candidate => fs.existsSync(path.join(rootPath, candidate)))
+    if (existing) return existing
     const manifested = candidates.find(candidate => (
       Object.prototype.hasOwnProperty.call(manifestFiles, candidate)
     ))
-    if (manifested) return manifested
-    return candidates.find(candidate => fs.existsSync(path.join(rootPath, candidate)))
-      || candidates[0]
+    return manifested || candidates[0]
   }
   const requiredIconIds = (iconDataset && iconDataset.requiredIds) || []
   requiredIconIds.forEach(id => {

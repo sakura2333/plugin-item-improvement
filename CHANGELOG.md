@@ -4,6 +4,14 @@
 
 - Add consumer views for equipment acquisition sources and special ship bonuses when their compatibility contracts are frozen.
 
+## [1.1.3] - 2026-08-11
+
+### Fixed
+
+- Switched the bundled use-item snapshot and local compatibility icon from PNG to WebP so the plugin fallback path matches the current data producer.
+- Use-item validation now prefers the file that actually exists on disk (WebP first, PNG fallback) instead of preferring a stale manifest PNG entry over an extracted WebP file.
+- Kept PNG readable only as a legacy cache fallback.
+
 ## [1.1.2] - 2026-08-11
 
 ### Fixed

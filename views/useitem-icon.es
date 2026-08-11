@@ -9,7 +9,7 @@ import _ from 'lodash'
 import { getUseitemIconPath } from './data-package'
 
 const fallback = resolve(__dirname, '../assets/icon/useitem.svg')
-const legacyIcon = id => resolve(__dirname, `../assets/icon/${id}.png`)
+const legacyIcon = id => resolve(__dirname, `../assets/icon/${id}.webp`)
 
 class StaticUseitemIcon extends Component {
   static propTypes = {
@@ -24,7 +24,7 @@ class StaticUseitemIcon extends Component {
   render() {
     const { useitemId, className, useSVGIcon } = this.props
     const classNames = classnames(
-      useSVGIcon ? 'svg' : 'png',
+      useSVGIcon ? 'svg' : 'webp',
       className
     )
     const packageIcon = getUseitemIconPath(useitemId)

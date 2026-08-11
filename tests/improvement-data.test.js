@@ -24,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.3', '1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.3', '1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -77,13 +77,11 @@ technicalTerms.forEach(term => {
 })
 
 const projectRoot = path.join(__dirname, '..')
-const compatibilityIconPath = path.join(projectRoot, 'assets', 'icon', '71.png')
-const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-assert.ok(fs.existsSync(compatibilityIconPath), 'compatibility icon 71.png is missing')
-assert.ok(
-  fs.readFileSync(compatibilityIconPath).subarray(0, 8).equals(pngSignature),
-  'compatibility icon 71.png is not a valid PNG'
-)
+const compatibilityIconPath = path.join(projectRoot, 'assets', 'icon', '71.webp')
+const compatibilityIconBytes = fs.readFileSync(compatibilityIconPath)
+assert.ok(fs.existsSync(compatibilityIconPath), 'compatibility icon 71.webp is missing')
+assert.strictEqual(compatibilityIconBytes.subarray(0, 4).toString('ascii'), 'RIFF')
+assert.strictEqual(compatibilityIconBytes.subarray(8, 12).toString('ascii'), 'WEBP')
 
 const dryRunOutput = execFileSync(
   process.platform === 'win32' ? 'npm.cmd' : 'npm',
@@ -93,8 +91,8 @@ const dryRunOutput = execFileSync(
 const dryRun = JSON.parse(dryRunOutput)
 const packedFiles = new Set(dryRun[0].files.map(file => file.path))
 assert.ok(
-  packedFiles.has('assets/icon/71.png'),
-  'npm package is missing assets/icon/71.png'
+  packedFiles.has('assets/icon/71.webp'),
+  'npm package is missing assets/icon/71.webp'
 )
 assert.ok(
   packedFiles.has('data/kancolle-data/manifest.json'),
@@ -243,7 +241,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.2')
+assert.strictEqual(pluginPackage.version, '1.1.3')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -300,26 +298,44 @@ const { validateDataRoot } = require('../views/data-package-validator.js')
 assert.doesNotThrow(() => validateDataRoot(getBundledDataRoot()))
 
 
-const webpFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-'))
+const legacyPngFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-png-'))
 try {
-  copyTree(getBundledDataRoot(), webpFixtureRoot)
-  const webpManifestPath = path.join(webpFixtureRoot, 'manifest.json')
-  const webpManifest = JSON.parse(fs.readFileSync(webpManifestPath, 'utf8'))
-  Object.keys(webpManifest.files || {}).forEach(relativePath => {
-    if (!/^assets\/useitems\/[^/]+\.png$/i.test(relativePath)) return
-    const webpRelativePath = relativePath.replace(/\.png$/i, '.webp')
-    const pngPath = path.join(webpFixtureRoot, relativePath)
-    const webpPath = path.join(webpFixtureRoot, webpRelativePath)
-    fs.renameSync(pngPath, webpPath)
-    webpManifest.files[webpRelativePath] = webpManifest.files[relativePath]
-    delete webpManifest.files[relativePath]
+  copyTree(getBundledDataRoot(), legacyPngFixtureRoot)
+  const legacyManifestPath = path.join(legacyPngFixtureRoot, 'manifest.json')
+  const legacyManifest = JSON.parse(fs.readFileSync(legacyManifestPath, 'utf8'))
+  Object.keys(legacyManifest.files || {}).forEach(relativePath => {
+    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
+    const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
+    const webpPath = path.join(legacyPngFixtureRoot, relativePath)
+    const pngPath = path.join(legacyPngFixtureRoot, pngRelativePath)
+    fs.renameSync(webpPath, pngPath)
+    legacyManifest.files[pngRelativePath] = legacyManifest.files[relativePath]
+    delete legacyManifest.files[relativePath]
   })
-  fs.writeFileSync(webpManifestPath, JSON.stringify(webpManifest))
-  const validatedWebp = validateDataRoot(webpFixtureRoot)
-  assert.ok(validatedWebp.useitemPath(2).endsWith(`${path.sep}2.webp`))
-  assert.ok(fs.existsSync(validatedWebp.useitemPath(2)))
+  fs.writeFileSync(legacyManifestPath, JSON.stringify(legacyManifest))
+  const validatedLegacyPng = validateDataRoot(legacyPngFixtureRoot)
+  assert.ok(validatedLegacyPng.useitemPath(2).endsWith(`${path.sep}2.png`))
+  assert.ok(fs.existsSync(validatedLegacyPng.useitemPath(2)))
 } finally {
-  fs.rmSync(webpFixtureRoot, { recursive: true, force: true })
+  fs.rmSync(legacyPngFixtureRoot, { recursive: true, force: true })
+}
+
+const stalePngManifestFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-stale-png-manifest-'))
+try {
+  copyTree(getBundledDataRoot(), stalePngManifestFixtureRoot)
+  const staleManifestPath = path.join(stalePngManifestFixtureRoot, 'manifest.json')
+  const staleManifest = JSON.parse(fs.readFileSync(staleManifestPath, 'utf8'))
+  Object.keys(staleManifest.files || {}).forEach(relativePath => {
+    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
+    const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
+    staleManifest.files[pngRelativePath] = staleManifest.files[relativePath]
+    delete staleManifest.files[relativePath]
+  })
+  fs.writeFileSync(staleManifestPath, JSON.stringify(staleManifest))
+  const validatedStaleManifest = validateDataRoot(stalePngManifestFixtureRoot)
+  assert.ok(validatedStaleManifest.useitemPath(2).endsWith(`${path.sep}2.webp`))
+} finally {
+  fs.rmSync(stalePngManifestFixtureRoot, { recursive: true, force: true })
 }
 
 function copyTree(source, destination) {
@@ -423,23 +439,9 @@ try {
   fs.rmSync(extractionRoot, { recursive: true, force: true })
 }
 
-const webpTarEntries = tarEntries.map(relativePath => (
-  relativePath.indexOf('assets/useitems/') === 0
-    ? relativePath.replace(/\.png$/i, '.webp')
-    : relativePath
-))
-const webpTarBuffer = Buffer.concat(
-  webpTarEntries.map(relativePath => {
-    const sourceRelativePath = relativePath.replace(/\.webp$/i, '.png')
-    return buildTarEntry(
-      `package/${relativePath}`,
-      fs.readFileSync(path.join(getBundledDataRoot(), sourceRelativePath))
-    )
-  }).concat([Buffer.alloc(1024)])
-)
 const webpExtractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-extract-'))
 try {
-  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(webpTarBuffer), webpExtractionRoot)
+  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), webpExtractionRoot)
   assert.ok(extracted.has('assets/useitems/2.webp'))
   assert.strictEqual(extracted.has('assets/useitems/2.png'), false)
 } finally {
