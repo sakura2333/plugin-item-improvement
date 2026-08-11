@@ -24,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.4', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.5', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.4', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.5', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -77,11 +77,13 @@ technicalTerms.forEach(term => {
 })
 
 const projectRoot = path.join(__dirname, '..')
-const compatibilityIconPath = path.join(projectRoot, 'assets', 'icon', '71.webp')
-const compatibilityIconBytes = fs.readFileSync(compatibilityIconPath)
-assert.ok(fs.existsSync(compatibilityIconPath), 'compatibility icon 71.webp is missing')
-assert.strictEqual(compatibilityIconBytes.subarray(0, 4).toString('ascii'), 'RIFF')
-assert.strictEqual(compatibilityIconBytes.subarray(8, 12).toString('ascii'), 'WEBP')
+const fallbackIconPath = path.join(projectRoot, 'data', 'fallback', 'useitem.svg')
+assert.ok(fs.existsSync(fallbackIconPath), 'fallback useitem.svg is missing')
+assert.strictEqual(
+  fs.existsSync(path.join(projectRoot, 'assets', 'icon')),
+  false,
+  'legacy assets/icon directory must not remain'
+)
 
 const dryRunOutput = execFileSync(
   process.platform === 'win32' ? 'npm.cmd' : 'npm',
@@ -91,8 +93,13 @@ const dryRunOutput = execFileSync(
 const dryRun = JSON.parse(dryRunOutput)
 const packedFiles = new Set(dryRun[0].files.map(file => file.path))
 assert.ok(
+  packedFiles.has('data/fallback/useitem.svg'),
+  'npm package is missing data/fallback/useitem.svg'
+)
+assert.strictEqual(
   packedFiles.has('assets/icon/71.webp'),
-  'npm package is missing assets/icon/71.webp'
+  false,
+  'npm package must not contain the removed local 71.webp fallback'
 )
 assert.ok(
   packedFiles.has('data/kancolle-data/manifest.json'),
@@ -241,7 +248,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.4')
+assert.strictEqual(pluginPackage.version, '1.1.5')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -280,7 +287,15 @@ assert.ok(dataPaths.listPath.startsWith(getBundledDataRoot()))
 assert.ok(dataPaths.detailPath.startsWith(getBundledDataRoot()))
 assert.ok(fs.existsSync(dataPaths.listPath))
 assert.ok(fs.existsSync(dataPaths.detailPath))
+assert.strictEqual(packageManifest.datasets.useitemIcons.directory, 'assets/useitem')
+assert.strictEqual(
+  fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitems')),
+  false,
+  'bundled data must not remap upstream assets/useitem to assets/useitems'
+)
+assert.ok(fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitem', '57.webp')))
 assert.ok(fs.existsSync(getUseitemIconPath(57)))
+assert.match(getUseitemIconPath(57), /assets[\\/]useitem[\\/]57\.webp$/)
 const listAsset = JSON.parse(fs.readFileSync(dataPaths.listPath, 'utf8'))
 const detailIds = new Set(
   fs.readFileSync(dataPaths.detailPath, 'utf8')
@@ -310,6 +325,18 @@ for (const runtimeFile of [
   )
 }
 
+for (const runtimeFile of [
+  'views/data-package-validator.es',
+  'views/data-updater.es',
+]) {
+  const runtimeSource = fs.readFileSync(path.join(projectRoot, runtimeFile), 'utf8')
+  assert.strictEqual(
+    runtimeSource.includes('assets/useitems'),
+    false,
+    `${runtimeFile} must preserve the upstream assets/useitem directory without remapping`
+  )
+}
+
 
 
 const pngOnlyFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-png-only-'))
@@ -318,7 +345,7 @@ try {
   const pngManifestPath = path.join(pngOnlyFixtureRoot, 'manifest.json')
   const pngManifest = JSON.parse(fs.readFileSync(pngManifestPath, 'utf8'))
   Object.keys(pngManifest.files || {}).forEach(relativePath => {
-    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
+    if (!/^assets\/useitem\/[^/]+\.webp$/i.test(relativePath)) return
     const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
     const webpPath = path.join(pngOnlyFixtureRoot, relativePath)
     const pngPath = path.join(pngOnlyFixtureRoot, pngRelativePath)
@@ -329,7 +356,7 @@ try {
   fs.writeFileSync(pngManifestPath, JSON.stringify(pngManifest))
   assert.throws(
     () => validateDataRoot(pngOnlyFixtureRoot),
-    /assets[\\/]useitems[\\/]2\.webp/
+    /assets[\\/]useitem[\\/]2\.webp/
   )
 } finally {
   fs.rmSync(pngOnlyFixtureRoot, { recursive: true, force: true })
@@ -416,8 +443,8 @@ const tarEntries = [
   'improvement/list.json',
   'improvement/detail.nedb',
 ].concat(
-  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitems'))
-    .map(name => `assets/useitems/${name}`)
+  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitem'))
+    .map(name => `assets/useitem/${name}`)
 )
 const tarBuffer = Buffer.concat(
   tarEntries.map(relativePath => buildTarEntry(
@@ -439,8 +466,8 @@ try {
 const webpExtractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-extract-'))
 try {
   const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), webpExtractionRoot)
-  assert.ok(extracted.has('assets/useitems/2.webp'))
-  assert.strictEqual(extracted.has('assets/useitems/2.png'), false)
+  assert.ok(extracted.has('assets/useitem/2.webp'))
+  assert.strictEqual(extracted.has('assets/useitem/2.png'), false)
 } finally {
   fs.rmSync(webpExtractionRoot, { recursive: true, force: true })
 }

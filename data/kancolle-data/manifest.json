@@ -136,7 +136,7 @@
     },
     "useitemIcons": {
       "schemaVersion": 1,
-      "directory": "assets/useitems",
+      "directory": "assets/useitem",
       "count": 16,
       "requiredIds": [
         2,
@@ -218,67 +218,67 @@
       "sha256": "1912cea6dc06fd71491d957bb34e68722b9a897f97ba5bc6519fed393739feda",
       "bytes": 795
     },
-    "assets/useitems/100.webp": {
+    "assets/useitem/100.webp": {
       "sha256": "d9d640e95c3b20237acee549a753ee80cbec5d3e67bcebbd1d354d4d2d12f6ce",
       "bytes": 17782
     },
-    "assets/useitems/104.webp": {
+    "assets/useitem/104.webp": {
       "sha256": "943b9355cf0a3758e71f4d4afa8387311d8b00040ca5c92a7fea0ea808568eb8",
       "bytes": 17954
     },
-    "assets/useitems/145.webp": {
+    "assets/useitem/145.webp": {
       "sha256": "516715a2e66533685c2b36bc2f0d5a8914759e63015c7d4495020e25d72ed5e4",
       "bytes": 17564
     },
-    "assets/useitems/150.webp": {
+    "assets/useitem/150.webp": {
       "sha256": "2631cbace370201169072ca5af1b028fe7ea56046f1d7ee075376ed4b5d579ea",
       "bytes": 19734
     },
-    "assets/useitems/2.webp": {
+    "assets/useitem/2.webp": {
       "sha256": "885bd4a13d0adb3337cdf74dcc7f7175043a66555fc2e48075cd9886f900f49a",
       "bytes": 16882
     },
-    "assets/useitems/241.webp": {
+    "assets/useitem/241.webp": {
       "sha256": "07449c8ec45900ff007c518c2886246bfee643ef130634238b034fd29f759c4d",
       "bytes": 18340
     },
-    "assets/useitems/57.webp": {
+    "assets/useitem/57.webp": {
       "sha256": "6f4f3c85f557f6550da39e4b1a72eae88543b7b3dc24a113c02cd965a77d4dad",
       "bytes": 84216
     },
-    "assets/useitems/70.webp": {
+    "assets/useitem/70.webp": {
       "sha256": "f64bd46eeced9f7779471151c1d1779602d455407b55cc6696bedd53a5db2cf8",
       "bytes": 32570
     },
-    "assets/useitems/71.webp": {
+    "assets/useitem/71.webp": {
       "sha256": "5c41a5ec14675ad4c939066270b72153287a4f829ac9ce04b24c8c725d110bff",
       "bytes": 9594
     },
-    "assets/useitems/75.webp": {
+    "assets/useitem/75.webp": {
       "sha256": "817b007c8d4da161da3236ce2561494499984c8f962b35d4a31345962ac37699",
       "bytes": 18444
     },
-    "assets/useitems/77.webp": {
+    "assets/useitem/77.webp": {
       "sha256": "02ac2d2ea2a1520a10d886f5d287dade583504ad9268c8f0f680b1a983b23f21",
       "bytes": 36456
     },
-    "assets/useitems/78.webp": {
+    "assets/useitem/78.webp": {
       "sha256": "05ed9465ae60ebbd64825a2cc0e49cad03576bf0bf8dbf075749340eee836f30",
       "bytes": 19520
     },
-    "assets/useitems/91.webp": {
+    "assets/useitem/91.webp": {
       "sha256": "2fa3240b2c38640ab0bd7fc111678151286bb262eaa7a758246d5705110dbc25",
       "bytes": 19424
     },
-    "assets/useitems/92.webp": {
+    "assets/useitem/92.webp": {
       "sha256": "e8bcd3a55e9f2a247a2d4b88fcf50e2193a5803d429106706a785532b6d44467",
       "bytes": 87994
     },
-    "assets/useitems/94.webp": {
+    "assets/useitem/94.webp": {
       "sha256": "a737e349e62dc3cbef0cfac989c50c9df7e6d152d9cf8da9672daa4311659143",
       "bytes": 95194
     },
-    "assets/useitems/95.webp": {
+    "assets/useitem/95.webp": {
       "sha256": "0e5d3bc46fb562c535d4f7af586fbbccc86e324a65e583c535f64f287c3c9287",
       "bytes": 28230
     },

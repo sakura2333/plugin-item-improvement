@@ -135,7 +135,7 @@ export function validateDataRoot(rootPath) {
   }))
 
   const iconDataset = manifest.datasets && manifest.datasets.useitemIcons
-  const iconDirectory = (iconDataset && iconDataset.directory) || 'assets/useitems'
+  const iconDirectory = (iconDataset && iconDataset.directory) || 'assets/useitem'
   const resolveUseitemRelativePath = id => `${iconDirectory}/${id}.webp`
   const requiredIconIds = (iconDataset && iconDataset.requiredIds) || []
   requiredIconIds.forEach(id => {

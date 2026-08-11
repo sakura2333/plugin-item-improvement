@@ -7,9 +7,9 @@ export const CHANGELOG_BASELINE_VERSION = '1.0.20'
 // Keep in-app notes focused on user-visible behavior. Engineering details belong in CHANGELOG.md.
 export const CHANGELOG = [
   {
-    version: '1.1.4',
+    version: '1.1.5',
     items: [
-      'changelog_1_1_4_auto_data_update',
+      'changelog_1_1_5_auto_data_update',
     ],
   },
   {

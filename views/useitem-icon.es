@@ -8,8 +8,7 @@ import { configSelector } from 'views/utils/selectors'
 import _ from 'lodash'
 import { getUseitemIconPath } from './data-package'
 
-const fallback = resolve(__dirname, '../assets/icon/useitem.svg')
-const localIcon = id => resolve(__dirname, `../assets/icon/${id}.webp`)
+const fallback = resolve(__dirname, '../data/fallback/useitem.svg')
 
 class StaticUseitemIcon extends Component {
   static propTypes = {
@@ -28,10 +27,9 @@ class StaticUseitemIcon extends Component {
       className
     )
     const packageIcon = getUseitemIconPath(useitemId)
-    const localPath = localIcon(useitemId)
     const src = packageIcon && fs.existsSync(packageIcon)
       ? packageIcon
-      : (fs.existsSync(localPath) ? localPath : fallback)
+      : fallback
 
     return (
       <img

@@ -28,7 +28,7 @@ const REQUIRED_ARCHIVE_PATHS = [
   'improvement/list.json',
   'improvement/detail.nedb',
 ]
-const OPTIONAL_ARCHIVE_PREFIX = 'assets/useitems/'
+const OPTIONAL_ARCHIVE_PREFIX = 'assets/useitem/'
 let updateScheduled = false
 
 function ensureDir(directory) {

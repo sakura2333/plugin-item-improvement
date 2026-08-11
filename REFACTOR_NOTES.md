@@ -2,7 +2,7 @@
 
 ## Runtime data
 
-Starting with 1.1.1, the plugin does not install `@sakura2333/kancolle-data` as a runtime npm dependency.
+The plugin does not install `@sakura2333/kancolle-data` as a runtime npm dependency.
 It owns the consumer-side lifecycle for the `improvement2` compatibility channel:
 
 - `data/kancolle-data/`: bundled validated snapshot used for first launch and offline fallback.
@@ -13,7 +13,7 @@ The runtime only consumes:
 
 - `improvement/list.json`: compact all + seven-day list projection.
 - `improvement/detail.nedb`: full equipment detail and recipe routes.
-- `assets/useitems/*.webp`: shared use-item icons (legacy PNG caches remain readable).
+- `assets/useitem/*.webp`: shared use-item icons, preserving the upstream package path.
 
 The updater checks the npm registry in the background, follows the `improvement2` dist-tag to an exact
 version, verifies package integrity, extracts only the allowlisted files, validates the supported schemas
@@ -37,7 +37,7 @@ recipes such as the `玉波改二` route for `12.7cm連装砲D型改二`.
 
 ## Publish order
 
-Data and plugin releases are independent after 1.1.1. A compatible data release can move the
+Data and plugin releases are independent. A compatible data release can move the
 `improvement2` dist-tag without publishing a new plugin version.
 
 Plugin release:
