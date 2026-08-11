@@ -24,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.2', '1.1.1', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -243,7 +243,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.1')
+assert.strictEqual(pluginPackage.version, '1.1.2')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -298,6 +298,29 @@ listAsset.data.forEach(rows => rows.forEach(([itemId]) => assert.ok(detailIds.ha
 
 const { validateDataRoot } = require('../views/data-package-validator.js')
 assert.doesNotThrow(() => validateDataRoot(getBundledDataRoot()))
+
+
+const webpFixtureRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-'))
+try {
+  copyTree(getBundledDataRoot(), webpFixtureRoot)
+  const webpManifestPath = path.join(webpFixtureRoot, 'manifest.json')
+  const webpManifest = JSON.parse(fs.readFileSync(webpManifestPath, 'utf8'))
+  Object.keys(webpManifest.files || {}).forEach(relativePath => {
+    if (!/^assets\/useitems\/[^/]+\.png$/i.test(relativePath)) return
+    const webpRelativePath = relativePath.replace(/\.png$/i, '.webp')
+    const pngPath = path.join(webpFixtureRoot, relativePath)
+    const webpPath = path.join(webpFixtureRoot, webpRelativePath)
+    fs.renameSync(pngPath, webpPath)
+    webpManifest.files[webpRelativePath] = webpManifest.files[relativePath]
+    delete webpManifest.files[relativePath]
+  })
+  fs.writeFileSync(webpManifestPath, JSON.stringify(webpManifest))
+  const validatedWebp = validateDataRoot(webpFixtureRoot)
+  assert.ok(validatedWebp.useitemPath(2).endsWith(`${path.sep}2.webp`))
+  assert.ok(fs.existsSync(validatedWebp.useitemPath(2)))
+} finally {
+  fs.rmSync(webpFixtureRoot, { recursive: true, force: true })
+}
 
 function copyTree(source, destination) {
   fs.mkdirSync(destination, { recursive: true })
@@ -398,6 +421,29 @@ try {
   assert.doesNotThrow(() => validateDataRoot(extractionRoot))
 } finally {
   fs.rmSync(extractionRoot, { recursive: true, force: true })
+}
+
+const webpTarEntries = tarEntries.map(relativePath => (
+  relativePath.indexOf('assets/useitems/') === 0
+    ? relativePath.replace(/\.png$/i, '.webp')
+    : relativePath
+))
+const webpTarBuffer = Buffer.concat(
+  webpTarEntries.map(relativePath => {
+    const sourceRelativePath = relativePath.replace(/\.webp$/i, '.png')
+    return buildTarEntry(
+      `package/${relativePath}`,
+      fs.readFileSync(path.join(getBundledDataRoot(), sourceRelativePath))
+    )
+  }).concat([Buffer.alloc(1024)])
+)
+const webpExtractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-extract-'))
+try {
+  const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(webpTarBuffer), webpExtractionRoot)
+  assert.ok(extracted.has('assets/useitems/2.webp'))
+  assert.strictEqual(extracted.has('assets/useitems/2.png'), false)
+} finally {
+  fs.rmSync(webpExtractionRoot, { recursive: true, force: true })
 }
 
 

@@ -160,7 +160,7 @@ function parseTarOctal(buffer, start, length) {
 
 function isAllowedArchivePath(relativePath) {
   return REQUIRED_ARCHIVE_PATHS.indexOf(relativePath) >= 0
-    || (relativePath.indexOf(OPTIONAL_ARCHIVE_PREFIX) === 0 && /\.png$/i.test(relativePath))
+    || (relativePath.indexOf(OPTIONAL_ARCHIVE_PREFIX) === 0 && /\.(?:png|webp)$/i.test(relativePath))
 }
 
 export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
@@ -250,6 +250,7 @@ function writeUpdateState(patch) {
 function shouldCheckNow(force) {
   if (force) return true
   const state = readUpdateState()
+  if (state.lastError) return true
   return !Number.isFinite(Number(state.checkedAt))
     || Date.now() - Number(state.checkedAt) >= CHECK_INTERVAL_MS
 }

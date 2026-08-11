@@ -4,6 +4,14 @@
 
 - Add consumer views for equipment acquisition sources and special ship bonuses when their compatibility contracts are frozen.
 
+## [1.1.2] - 2026-08-11
+
+### Fixed
+
+- Updated the independent data updater to accept both WebP and legacy PNG use-item assets.
+- Resolved use-item icon paths from the downloaded manifest instead of assuming a `.png` extension, so current `improvement2` releases can pass validation and activate normally.
+- A previous data-update error now triggers an immediate retry on the next plugin/Poi startup instead of waiting for the normal one-hour interval.
+
 ## [1.1.1] - 2026-08-10
 
 ### Changed
