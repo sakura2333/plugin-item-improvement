@@ -28,7 +28,6 @@ const REQUIRED_ARCHIVE_PATHS = [
   'improvement/list.json',
   'improvement/detail.nedb',
 ]
-const OPTIONAL_ARCHIVE_PREFIX = 'assets/useitem/'
 let updateScheduled = false
 
 function ensureDir(directory) {
@@ -158,15 +157,22 @@ function parseTarOctal(buffer, start, length) {
   return value ? parseInt(value, 8) : 0
 }
 
-function isAllowedArchivePath(relativePath) {
-  return REQUIRED_ARCHIVE_PATHS.indexOf(relativePath) >= 0
-    || (relativePath.indexOf(OPTIONAL_ARCHIVE_PREFIX) === 0 && /\.webp$/i.test(relativePath))
+function normalizeArchivePath(archivePath) {
+  return archivePath.indexOf('package/') === 0
+    ? archivePath.slice('package/'.length)
+    : archivePath
 }
 
-export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
-  const tarBuffer = zlib.gunzipSync(tarGzBuffer)
+function validateArchiveRelativePath(relativePath) {
+  const segments = String(relativePath).split('/')
+  if (path.isAbsolute(relativePath) || segments.indexOf('..') >= 0) {
+    throw new Error('Unsafe data package path')
+  }
+}
+
+function scanTarEntries(tarBuffer) {
   let offset = 0
-  const extracted = new Set()
+  const entries = []
 
   while (offset + 512 <= tarBuffer.length) {
     const header = tarBuffer.slice(offset, offset + 512)
@@ -182,6 +188,7 @@ export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
     const name = parseTarString(header, 0, 100)
     const prefix = parseTarString(header, 345, 155)
     const archivePath = prefix ? `${prefix}/${name}` : name
+    const relativePath = normalizeArchivePath(archivePath)
     const size = parseTarOctal(header, 124, 12)
     const type = String.fromCharCode(header[156] || 48)
     const dataStart = offset + 512
@@ -191,22 +198,58 @@ export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
       throw new Error('Truncated data package archive')
     }
 
-    const relativePath = archivePath.indexOf('package/') === 0
-      ? archivePath.slice('package/'.length)
-      : archivePath
-
-    if ((type === '0' || type === '\0') && isAllowedArchivePath(relativePath)) {
-      if (relativePath.indexOf('..') >= 0 || path.isAbsolute(relativePath)) {
-        throw new Error('Unsafe data package path')
-      }
-      const outputPath = path.join(destinationRoot, relativePath)
-      ensureDir(path.dirname(outputPath))
-      fs.writeFileSync(outputPath, tarBuffer.slice(dataStart, dataEnd))
-      extracted.add(relativePath)
+    if (type === '0' || type === '\0') {
+      validateArchiveRelativePath(relativePath)
+      entries.push({ relativePath, dataStart, dataEnd })
     }
 
     offset = dataStart + (Math.ceil(size / 512) * 512)
   }
+
+  return entries
+}
+
+function getArchiveUseitemDirectory(entries, tarBuffer) {
+  const manifestEntry = entries.find(entry => entry.relativePath === 'manifest.json')
+  if (!manifestEntry) throw new Error('Data package archive is missing manifest.json')
+
+  let manifest
+  try {
+    manifest = JSON.parse(tarBuffer.slice(manifestEntry.dataStart, manifestEntry.dataEnd).toString('utf8'))
+  } catch (error) {
+    throw new Error('Data package manifest is invalid JSON')
+  }
+
+  const iconDataset = manifest.datasets && manifest.datasets.useitemIcons
+  const iconDirectory = String((iconDataset && iconDataset.directory) || 'assets/useitems')
+    .replace(/\/+$/, '')
+  validateArchiveRelativePath(iconDirectory)
+  if (iconDirectory.indexOf('assets/') !== 0) {
+    throw new Error(`Unsafe useitem icon directory: ${iconDirectory}`)
+  }
+  return iconDirectory
+}
+
+function writeTarEntry(tarBuffer, destinationRoot, entry, extracted) {
+  const outputPath = path.join(destinationRoot, entry.relativePath)
+  ensureDir(path.dirname(outputPath))
+  fs.writeFileSync(outputPath, tarBuffer.slice(entry.dataStart, entry.dataEnd))
+  extracted.add(entry.relativePath)
+}
+
+export function extractRequiredFilesFromTarGz(tarGzBuffer, destinationRoot) {
+  const tarBuffer = zlib.gunzipSync(tarGzBuffer)
+  const entries = scanTarEntries(tarBuffer)
+  const extracted = new Set()
+  const useitemDirectory = getArchiveUseitemDirectory(entries, tarBuffer)
+  const useitemPrefix = `${useitemDirectory}/`
+
+  entries.forEach(entry => {
+    const required = REQUIRED_ARCHIVE_PATHS.indexOf(entry.relativePath) >= 0
+    const useitem = entry.relativePath.indexOf(useitemPrefix) === 0
+      && /\.webp$/i.test(entry.relativePath)
+    if (required || useitem) writeTarEntry(tarBuffer, destinationRoot, entry, extracted)
+  })
 
   REQUIRED_ARCHIVE_PATHS.forEach(requiredPath => {
     if (!extracted.has(requiredPath)) {

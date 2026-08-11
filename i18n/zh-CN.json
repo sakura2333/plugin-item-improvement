@@ -60,5 +60,5 @@
   "changelog_1_0_21_separate_routes": "材料、资材或升级目标不同的改修路线现在会分表展示。",
   "changelog_1_0_21_tamanami_route": "补充玉波改二专属的改修材料路线，避免与普通路线混在一起。",
   "changelog_1_0_27_data_safety": "加强改修资料完整性检查，遇到不完整或不兼容的资料时会拒绝加载，避免显示错误内容。",
-  "changelog_1_1_5_auto_data_update": "改修资料现在会在后台自动更新，后续资料更新不再需要同步发布插件版本。"
+  "changelog_1_1_7_auto_data_update": "改修资料现在会在后台自动更新，后续资料更新不再需要同步发布插件版本。"
 }

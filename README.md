@@ -20,7 +20,7 @@ The runtime plugin no longer installs `@sakura2333/kancolle-data` as an npm depe
 
 ## Publishing
 
-Publish compatible data to the `@sakura2333/kancolle-data` `improvement2` dist-tag. Plugin releases and data releases are independent after 1.1.1.
+Publish compatible data to the `@sakura2333/kancolle-data` `improvement2` dist-tag. Plugin releases and data releases are independent after 1.1.7.
 
 Official package:
 

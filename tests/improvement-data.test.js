@@ -24,11 +24,11 @@ assert.strictEqual(compareVersions('1.0.21', '1.0.21'), 0)
 assert.strictEqual(compareVersions('1.0.20', '1.0.21'), -1)
 assert.deepStrictEqual(
   getChangelogEntriesSince('1.0.21').map(entry => entry.version),
-  ['1.1.5', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
+  ['1.1.7', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22']
 )
 assert.deepStrictEqual(
   getChangelogEntriesSince(null).map(entry => entry.version),
-  ['1.1.5', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
+  ['1.1.7', '1.0.27', '1.0.26', '1.0.25', '1.0.24', '1.0.23', '1.0.22', '1.0.21']
 )
 
 const localeNames = ['zh-CN', 'zh-TW', 'ja-JP', 'en-US']
@@ -248,7 +248,7 @@ assert.strictEqual(listProjection.assistantTextByItemId[19][-1], '鳳翔 / 鳳�
 assert.strictEqual(listProjection.assistantTextByItemId[19][0], '鳳翔')
 
 const pluginPackage = require('../package.json')
-assert.strictEqual(pluginPackage.version, '1.1.5')
+assert.strictEqual(pluginPackage.version, '1.1.7')
 assert.strictEqual(
   Object.prototype.hasOwnProperty.call(pluginPackage.dependencies, '@sakura2333/kancolle-data'),
   false,
@@ -287,15 +287,15 @@ assert.ok(dataPaths.listPath.startsWith(getBundledDataRoot()))
 assert.ok(dataPaths.detailPath.startsWith(getBundledDataRoot()))
 assert.ok(fs.existsSync(dataPaths.listPath))
 assert.ok(fs.existsSync(dataPaths.detailPath))
-assert.strictEqual(packageManifest.datasets.useitemIcons.directory, 'assets/useitem')
+assert.strictEqual(packageManifest.datasets.useitemIcons.directory, 'assets/useitems')
 assert.strictEqual(
-  fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitems')),
+  fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitem')),
   false,
-  'bundled data must not remap upstream assets/useitem to assets/useitems'
+  'bundled improvement2 data must preserve assets/useitems without remapping to assets/useitem'
 )
-assert.ok(fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitem', '57.webp')))
+assert.ok(fs.existsSync(path.join(getBundledDataRoot(), 'assets', 'useitems', '57.webp')))
 assert.ok(fs.existsSync(getUseitemIconPath(57)))
-assert.match(getUseitemIconPath(57), /assets[\\/]useitem[\\/]57\.webp$/)
+assert.match(getUseitemIconPath(57), /assets[\\/]useitems[\\/]57\.webp$/)
 const listAsset = JSON.parse(fs.readFileSync(dataPaths.listPath, 'utf8'))
 const detailIds = new Set(
   fs.readFileSync(dataPaths.detailPath, 'utf8')
@@ -332,8 +332,8 @@ for (const runtimeFile of [
   const runtimeSource = fs.readFileSync(path.join(projectRoot, runtimeFile), 'utf8')
   assert.strictEqual(
     runtimeSource.includes('assets/useitems'),
-    false,
-    `${runtimeFile} must preserve the upstream assets/useitem directory without remapping`
+    true,
+    `${runtimeFile} must default to the improvement2 assets/useitems contract`
   )
 }
 
@@ -345,7 +345,7 @@ try {
   const pngManifestPath = path.join(pngOnlyFixtureRoot, 'manifest.json')
   const pngManifest = JSON.parse(fs.readFileSync(pngManifestPath, 'utf8'))
   Object.keys(pngManifest.files || {}).forEach(relativePath => {
-    if (!/^assets\/useitem\/[^/]+\.webp$/i.test(relativePath)) return
+    if (!/^assets\/useitems\/[^/]+\.webp$/i.test(relativePath)) return
     const pngRelativePath = relativePath.replace(/\.webp$/i, '.png')
     const webpPath = path.join(pngOnlyFixtureRoot, relativePath)
     const pngPath = path.join(pngOnlyFixtureRoot, pngRelativePath)
@@ -356,7 +356,7 @@ try {
   fs.writeFileSync(pngManifestPath, JSON.stringify(pngManifest))
   assert.throws(
     () => validateDataRoot(pngOnlyFixtureRoot),
-    /assets[\\/]useitem[\\/]2\.webp/
+    /assets[\\/]useitems[\\/]2\.webp/
   )
 } finally {
   fs.rmSync(pngOnlyFixtureRoot, { recursive: true, force: true })
@@ -443,8 +443,8 @@ const tarEntries = [
   'improvement/list.json',
   'improvement/detail.nedb',
 ].concat(
-  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitem'))
-    .map(name => `assets/useitem/${name}`)
+  fs.readdirSync(path.join(getBundledDataRoot(), 'assets', 'useitems'))
+    .map(name => `assets/useitems/${name}`)
 )
 const tarBuffer = Buffer.concat(
   tarEntries.map(relativePath => buildTarEntry(
@@ -466,10 +466,51 @@ try {
 const webpExtractionRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-webp-extract-'))
 try {
   const extracted = extractRequiredFilesFromTarGz(zlib.gzipSync(tarBuffer), webpExtractionRoot)
-  assert.ok(extracted.has('assets/useitem/2.webp'))
-  assert.strictEqual(extracted.has('assets/useitem/2.png'), false)
+  assert.ok(extracted.has('assets/useitems/2.webp'))
+  assert.strictEqual(extracted.has('assets/useitems/2.png'), false)
 } finally {
   fs.rmSync(webpExtractionRoot, { recursive: true, force: true })
+}
+
+const manifestDirectedRoot = fs.mkdtempSync(path.join(require('os').tmpdir(), 'improvement-data-manifest-dir-'))
+try {
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(getBundledDataRoot(), 'manifest.json'), 'utf8')
+  )
+  const originalDirectory = manifest.datasets.useitemIcons.directory
+  const declaredDirectory = 'assets/useitem'
+  manifest.datasets.useitemIcons.directory = declaredDirectory
+  manifest.files = Object.keys(manifest.files).reduce((files, relativePath) => {
+    const mappedPath = relativePath.indexOf(`${originalDirectory}/`) === 0
+      ? `${declaredDirectory}/${relativePath.slice(originalDirectory.length + 1)}`
+      : relativePath
+    files[mappedPath] = manifest.files[relativePath]
+    return files
+  }, {})
+
+  const iconNames = fs.readdirSync(path.join(getBundledDataRoot(), originalDirectory))
+  const entries = [
+    buildTarEntry('package/manifest.json', Buffer.from(JSON.stringify(manifest))),
+    buildTarEntry(
+      'package/improvement/list.json',
+      fs.readFileSync(path.join(getBundledDataRoot(), 'improvement/list.json'))
+    ),
+    buildTarEntry(
+      'package/improvement/detail.nedb',
+      fs.readFileSync(path.join(getBundledDataRoot(), 'improvement/detail.nedb'))
+    ),
+  ].concat(iconNames.map(name => buildTarEntry(
+    `package/${declaredDirectory}/${name}`,
+    fs.readFileSync(path.join(getBundledDataRoot(), originalDirectory, name))
+  )))
+  const declaredTar = zlib.gzipSync(Buffer.concat(entries.concat([Buffer.alloc(1024)])))
+  const extracted = extractRequiredFilesFromTarGz(declaredTar, manifestDirectedRoot)
+
+  assert.ok(extracted.has(`${declaredDirectory}/2.webp`))
+  assert.strictEqual(extracted.has(`${originalDirectory}/2.webp`), false)
+  assert.doesNotThrow(() => validateDataRoot(manifestDirectedRoot))
+} finally {
+  fs.rmSync(manifestDirectedRoot, { recursive: true, force: true })
 }
 
 
